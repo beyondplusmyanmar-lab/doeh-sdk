@@ -5,6 +5,22 @@ validated [golden client](../../README.md#provenance) — the SDK exists so the
 public integration surface can never drift from the contract that was proven
 live (14/14) against the sandbox.
 
+## Install
+
+```bash
+npm install @beyondplusmm/doehpos-sdk
+# or
+pnpm add @beyondplusmm/doehpos-sdk
+# or
+yarn add @beyondplusmm/doehpos-sdk
+```
+
+- **npm:** https://www.npmjs.com/package/@beyondplusmm/doehpos-sdk
+- **GitHub:** https://github.com/beyondplusmyanmar-lab/doeh-sdk
+- Download the raw tarball: `npm pack @beyondplusmm/doehpos-sdk`
+
+## Usage
+
 ```ts
 import { DoehClient } from "@beyondplusmm/doehpos-sdk";
 

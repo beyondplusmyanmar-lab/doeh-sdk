@@ -1,6 +1,6 @@
 # Doeh POS — SDK & Expo reference
 
-Public developer artifacts for the Doeh POS API: a typed SDK and (soon) an Expo
+Public developer artifacts for the Doeh POS API: a typed SDK and an Expo
 reference app you can fork and adapt to your own merchant, rider, kitchen, or
 marketplace integration.
 
@@ -9,7 +9,7 @@ doeh-sdk/
 ├── packages/
 │   └── sdk/                 # @beyondplusmm/doehpos-sdk — the stable public contract (H.1, DONE)
 ├── apps/
-│   └── expo-reference/      # Expo single-shop demo (H.2, next)
+│   └── expo-reference/      # Expo single-shop demo (H.2, DONE)
 ├── examples/
 │   └── minimal-node/        # smallest real consumer
 ├── openapi/                 # the public API specs (source of the types)
@@ -18,7 +18,22 @@ doeh-sdk/
 └── package.json
 ```
 
-## Quick start
+## Install
+
+The SDK is published on npm:
+
+```bash
+npm install @beyondplusmm/doehpos-sdk
+# or
+pnpm add @beyondplusmm/doehpos-sdk
+# or
+yarn add @beyondplusmm/doehpos-sdk
+```
+
+- **npm:** https://www.npmjs.com/package/@beyondplusmm/doehpos-sdk
+- Download the raw tarball: `npm pack @beyondplusmm/doehpos-sdk`
+
+## Build from source
 
 ```bash
 pnpm install
@@ -43,7 +58,7 @@ away from the contract that was empirically proven.
 | --- | --- | --- |
 | **H.1** | `@beyondplusmm/doehpos-sdk`: transport, typed error ABI, idempotency, offline queue, **delivery** module; kitchen/loyalty/marketplace/rider `@experimental` | ✅ done |
 | **H.2** | Expo reference app: paste `sk_test_`, create/read order, offline replay, double-tap dedupe, config-only cutover | ✅ done |
-| **H.3** | Public release: npm package + GitHub + docs (fork-and-go) | planned |
+| **H.3** | Public release: npm package + GitHub + docs (fork-and-go) | ✅ done |
 
 ## License
 
