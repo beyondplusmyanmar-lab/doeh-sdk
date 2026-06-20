@@ -69,9 +69,10 @@ const result = await queue.flush(); // reuses the same key — exactly one order
 
 ## Stability
 
-`delivery` is the **stable** surface. `kitchen`, `loyalty`, `marketplace`, and
-`rider` are **`@experimental`** — generated from their OpenAPI specs and the
-golden client, but not yet exercised by the reference app. They graduate
+`delivery`, `kitchen`, and `loyalty` are the **stable** surface — all exercised
+by the Expo reference app (`kitchen`/`loyalty` graduated in 0.2.0). `marketplace`
+and `rider` remain **`@experimental`** — generated from their OpenAPI specs and
+the golden client, but not yet exercised by the reference app. Modules graduate
 experimental → reference-app-exercised → stable. Evidence promotes an API;
 a schema only permits it.
 

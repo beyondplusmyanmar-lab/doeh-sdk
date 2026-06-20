@@ -1,13 +1,16 @@
 /**
- * Loyalty — EXPERIMENTAL.
+ * Loyalty — stable.
  *
- * @experimental Schema/golden-client-derived; not yet exercised by the Expo
- * reference app. `earn` auto-provisions the member account. Member ids must
- * match [A-Za-z0-9_]+ (no hyphens).
+ *   POST /v1/loyalty/members/{id}/earn   award points (auto-provisions the member)
+ *   GET  /v1/loyalty/members/{id}        read the member's balance
+ *
+ * `earn` auto-provisions the member account. Member ids must match [A-Za-z0-9_]+
+ * (no hyphens). Graduated from @experimental in 0.2.0 once exercised by the Expo
+ * reference app.
  */
-import type { Transport } from "../../transport.js";
-import type { CallOptions } from "../../types.js";
-import { generateIdempotencyKey } from "../../idempotency.js";
+import type { Transport } from "../transport.js";
+import type { CallOptions } from "../types.js";
+import { generateIdempotencyKey } from "../idempotency.js";
 
 export interface EarnInput {
   points: number;
@@ -24,7 +27,7 @@ const MEMBER_ID = /^[A-Za-z0-9_]+$/;
 export class LoyaltyModule {
   constructor(private readonly transport: Transport) {}
 
-  /** @experimental */
+  /** Award points to a member (auto-provisions the account). Idempotent with an Idempotency-Key. */
   async earn(memberId: string, input: EarnInput, opts: CallOptions = {}): Promise<AccountResponse> {
     if (!MEMBER_ID.test(memberId)) throw new RangeError(`invalid member id ${JSON.stringify(memberId)}`);
     const { body } = await this.transport.request<AccountResponse>({
@@ -38,7 +41,7 @@ export class LoyaltyModule {
     return body;
   }
 
-  /** @experimental */
+  /** Read a member's balance back by id. */
   async getMember(memberId: string, opts: CallOptions = {}): Promise<AccountResponse> {
     if (!MEMBER_ID.test(memberId)) throw new RangeError(`invalid member id ${JSON.stringify(memberId)}`);
     const { body } = await this.transport.request<AccountResponse>({

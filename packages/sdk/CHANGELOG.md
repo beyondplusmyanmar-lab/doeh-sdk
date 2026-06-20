@@ -4,6 +4,18 @@ All notable changes to `@beyondplusmm/doehpos-sdk` are documented here. This pro
 [Semantic Versioning](https://semver.org/). The stable surface is `delivery`;
 `@experimental` modules may change in a minor release until they graduate.
 
+## 0.2.0
+
+### Changed
+
+- **kitchen** and **loyalty** graduated from `@experimental` to **stable** — now
+  exercised end to end by the Expo reference app (`apps/expo-reference`). Their
+  module files moved from `modules/experimental/` to `modules/`; the public
+  import surface (`import { KitchenModule, LoyaltyModule } from "@beyondplusmm/doehpos-sdk"`)
+  is unchanged.
+- `marketplace` and `rider` remain `@experimental` until exercised by the
+  reference app.
+
 ## 0.1.0
 
 Initial release — a typed port of the validated golden client.

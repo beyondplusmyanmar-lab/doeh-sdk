@@ -1,6 +1,6 @@
 {
   "name": "@beyondplusmm/doehpos-sdk",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Official TypeScript SDK for the Doeh POS public API — a typed port of the validated golden client.",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,8 +21,9 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "prepack": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "prepack": "rm -rf dist && tsc -p tsconfig.json",
     "test": "pnpm build && node --test test/",
     "test:integration": "pnpm build && node test/golden.integration.mjs"
   },
