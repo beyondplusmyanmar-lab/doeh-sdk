@@ -207,11 +207,12 @@ test("orders.submit rejects a bad line (qty < 1 / empty sku) client-side", async
 });
 
 test("orders catalog error codes map to typed classes", async () => {
-  const { UnknownSkuError, UnpricedSkuError, EmptyOrderError, InsufficientStockError } = await import(
+  const { UnknownSkuError, UnpricedSkuError, EmptyOrderError, InsufficientStockError, FulfillmentNotAvailableError } = await import(
     "../dist/index.js"
   );
   assert.ok(mapApiError(422, { code: "EDGE_UNKNOWN_SKU" }) instanceof UnknownSkuError);
   assert.ok(mapApiError(422, { code: "EDGE_UNPRICED_SKU" }) instanceof UnpricedSkuError);
   assert.ok(mapApiError(422, { code: "EDGE_EMPTY_ORDER" }) instanceof EmptyOrderError);
   assert.ok(mapApiError(422, { code: "EDGE_INSUFFICIENT_STOCK" }) instanceof InsufficientStockError);
+  assert.ok(mapApiError(422, { code: "EDGE_FULFILLMENT_NOT_AVAILABLE" }) instanceof FulfillmentNotAvailableError);
 });

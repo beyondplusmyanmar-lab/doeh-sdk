@@ -48,7 +48,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }       # API_KEY_SCOPE_DENIED, EDGE_TRANSPORT_DISABLED
         '409': { $ref: '#/components/responses/Conflict' }        # EDGE_REPLAYED
-        '422': { $ref: '#/components/responses/Unprocessable' }   # EDGE_EMPTY_ORDER, EDGE_UNKNOWN_SKU, EDGE_UNPRICED_SKU, EDGE_INSUFFICIENT_STOCK
+        '422': { $ref: '#/components/responses/Unprocessable' }   # EDGE_EMPTY_ORDER, EDGE_UNKNOWN_SKU, EDGE_UNPRICED_SKU, EDGE_INSUFFICIENT_STOCK, EDGE_FULFILLMENT_NOT_AVAILABLE
   /v1/orders/{id}:
     get:
       tags: [Orders]
@@ -217,6 +217,7 @@ components:
       description: >
         Validation failed against the catalog. EDGE_EMPTY_ORDER (no lines), EDGE_UNKNOWN_SKU (a sku
         is not in the catalog), EDGE_UNPRICED_SKU (no price coverage in the branch-native currency),
-        EDGE_INSUFFICIENT_STOCK (tracked product without enough stock).
-      x-error-codes: [EDGE_EMPTY_ORDER, EDGE_UNKNOWN_SKU, EDGE_UNPRICED_SKU, EDGE_INSUFFICIENT_STOCK]
+        EDGE_INSUFFICIENT_STOCK (tracked product without enough stock),
+        EDGE_FULFILLMENT_NOT_AVAILABLE (V1: `delivery` fulfillment is not yet served — pickup/dine_in only).
+      x-error-codes: [EDGE_EMPTY_ORDER, EDGE_UNKNOWN_SKU, EDGE_UNPRICED_SKU, EDGE_INSUFFICIENT_STOCK, EDGE_FULFILLMENT_NOT_AVAILABLE]
       content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

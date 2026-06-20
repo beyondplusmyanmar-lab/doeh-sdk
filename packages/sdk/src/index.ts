@@ -65,6 +65,7 @@ export {
   UnknownSkuError,
   UnpricedSkuError,
   InsufficientStockError,
+  FulfillmentNotAvailableError,
   RateLimitedError,
   isRetryable,
   mapApiError,
