@@ -14,11 +14,15 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "src",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepack": "tsc -p tsconfig.json",
     "test": "pnpm build && node --test test/",
     "test:integration": "pnpm build && node test/golden.integration.mjs"
   },
@@ -31,6 +35,22 @@
     "react-native"
   ],
   "license": "MIT",
+  "author": "bplusmyanmar <bplusmyanmar@gmail.com>",
+  "homepage": "https://github.com/beyondplusmyanmar-lab/doeh-sdk/tree/main/packages/sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beyondplusmyanmar-lab/doeh-sdk.git",
+    "directory": "packages/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/beyondplusmyanmar-lab/doeh-sdk/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "typescript": "^5.6.3"
   }
