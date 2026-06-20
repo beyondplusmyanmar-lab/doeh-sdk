@@ -18,6 +18,28 @@ doeh-sdk/
 └── package.json
 ```
 
+## What DOEH is
+
+DOEH is an **application platform**, not a merchant application. It exposes
+**composable business capabilities** — delivery, kitchen, loyalty, marketplace,
+rider — as independent SDK modules over a stable contract.
+
+- **Consume one capability or many.** A kitchen-display app may use only
+  `client.kitchen`; a loyalty kiosk only `client.loyalty`. The modules don't
+  depend on each other.
+- **DOEH prescribes no client UI or client-side workflow.** You build the screens
+  and the flow; ship it to the app stores under your own branding.
+- **Integrity-critical orchestration is server-owned.** When a business action
+  fans out (an order → kitchen ticket → loyalty → accounting), that is the
+  server's job as business truth — not a chain of calls composed on the device.
+  Clients compose *capabilities*, not transactions.
+
+The artifacts here serve that model: the **SDK** is typed transport, the
+**Expo reference app** is a teaching client that intentionally exposes SDK
+concepts (`minor units`, idempotency, `ScopeDeniedError`), and the OpenAPI specs
+are the contract. Apps you build to *use* DOEH should hide those concepts behind
+your own domain layer.
+
 ## Install
 
 The SDK is published on npm:
