@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { QueueStorage } from "@doeh/sdk";
+import type { QueueStorage } from "@beyondplusmm/doehpos-sdk";
 
 // The offline queue persists pending creates (payload + idempotency key) so they
 // survive app restarts. The queue is not secret (it holds order amounts, not the

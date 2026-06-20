@@ -1,4 +1,4 @@
-import { DoehClient, type Environment } from "@doeh/sdk";
+import { DoehClient, type Environment } from "@beyondplusmm/doehpos-sdk";
 import { USER_AGENT } from "@/config/env";
 
 // React Native provides a global fetch, so no fetch injection is needed.

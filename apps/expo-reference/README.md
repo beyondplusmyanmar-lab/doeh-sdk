@@ -1,6 +1,6 @@
 # doeh-expo-reference
 
-A single-shop merchant app built on [`@doeh/sdk`](../../packages/sdk). It is
+A single-shop merchant app built on [`@beyondplusmm/doehpos-sdk`](../../packages/sdk). It is
 **executable documentation**: fork it, paste a sandbox key, and you have a
 working delivery integration to adapt.
 
@@ -9,7 +9,7 @@ working delivery integration to adapt.
 ```bash
 # from the repo root
 pnpm install
-pnpm --filter @doeh/sdk build      # the app imports the built SDK
+pnpm --filter @beyondplusmm/doehpos-sdk build      # the app imports the built SDK
 cd apps/expo-reference
 npx expo start                     # press i / a / w for iOS / Android / web
 ```
@@ -26,7 +26,7 @@ Then open **Settings**, paste a `sk_test_` key, keep the environment on
 | Create a delivery order | `app/create.tsx` → `src/hooks/useCreateOrder.ts` |
 | Read an order back | `app/order/[id].tsx` → `src/hooks/useOrder.ts` |
 | Idempotent replay works | `app/idempotency.tsx` (two sends, one key, `idempotent=true`) |
-| Offline replay works | `src/hooks/useOnlineFlush.ts` + the offline queue (`@doeh/sdk`) |
+| Offline replay works | `src/hooks/useOnlineFlush.ts` + the offline queue (`@beyondplusmm/doehpos-sdk`) |
 | Validation rendered nicely | `app/create.tsx` outcome card (typed errors) |
 | Survives API restart | retries are transport/429-only; the queue holds the rest |
 | Sandbox → production is config-only | `app/settings.tsx` environment toggle |
@@ -40,7 +40,7 @@ expo-router screens (app/)
 hooks (src/hooks/)            ← React Query cache + mutations
         │
         ▼
-@doeh/sdk  DoehClient + OfflineQueue
+@beyondplusmm/doehpos-sdk  DoehClient + OfflineQueue
         │
         ▼
 sandbox-api.doehpos.com

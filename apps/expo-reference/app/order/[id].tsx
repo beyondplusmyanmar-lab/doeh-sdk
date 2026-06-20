@@ -1,7 +1,7 @@
 import React from "react";
 import { ScrollView, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { OrderNotFoundError } from "@doeh/sdk";
+import { OrderNotFoundError } from "@beyondplusmm/doehpos-sdk";
 import { useOrder } from "@/hooks/useOrder";
 import { Body, Button, Card, Muted, Pill, Screen, Title, colors } from "@/components/ui";
 

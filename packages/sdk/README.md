@@ -1,4 +1,4 @@
-# @doeh/sdk
+# @beyondplusmm/doehpos-sdk
 
 Official TypeScript SDK for the **Doeh POS public API**. A typed port of the
 validated [golden client](../../README.md#provenance) — the SDK exists so the
@@ -6,7 +6,7 @@ public integration surface can never drift from the contract that was proven
 live (14/14) against the sandbox.
 
 ```ts
-import { DoehClient } from "@doeh/sdk";
+import { DoehClient } from "@beyondplusmm/doehpos-sdk";
 
 const client = new DoehClient({ apiKey: "sk_test_…", environment: "sandbox" });
 
@@ -37,7 +37,7 @@ const { order: same } = await client.delivery.get(order.id);
 ## Offline queue
 
 ```ts
-import { OfflineQueue, MemoryStorage } from "@doeh/sdk";
+import { OfflineQueue, MemoryStorage } from "@beyondplusmm/doehpos-sdk";
 
 // On React Native, back this with an AsyncStorage-backed QueueStorage.
 const queue = new OfflineQueue(client.delivery, new MemoryStorage());

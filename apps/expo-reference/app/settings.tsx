@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
-import type { Environment } from "@doeh/sdk";
+import type { Environment } from "@beyondplusmm/doehpos-sdk";
 import { useCredentials } from "@/store/credentials";
 import { ENVIRONMENTS } from "@/config/env";
 import { Body, Button, Card, Field, Muted, Pill, Screen, Title, colors } from "@/components/ui";

@@ -4,7 +4,7 @@ import {
   OrderNotFoundError,
   RateLimitedError,
   type Order,
-} from "@doeh/sdk";
+} from "@beyondplusmm/doehpos-sdk";
 import { useDoehClient } from "./useDoehClient";
 
 /** Read one order. The SDK already retries transport/429, so React Query's own

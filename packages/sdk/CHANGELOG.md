@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@doeh/sdk` are documented here. This project adheres to
+All notable changes to `@beyondplusmm/doehpos-sdk` are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/). The stable surface is `delivery`;
 `@experimental` modules may change in a minor release until they graduate.
 

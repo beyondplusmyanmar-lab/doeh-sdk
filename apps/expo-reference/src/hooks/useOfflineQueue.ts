@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { OfflineQueue } from "@doeh/sdk";
+import { OfflineQueue } from "@beyondplusmm/doehpos-sdk";
 import { useDoehClient } from "./useDoehClient";
 import { queueStorage } from "@/api/queueStorage";
 

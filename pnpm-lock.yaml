@@ -10,7 +10,7 @@ importers:
 
   apps/expo-reference:
     dependencies:
-      '@doeh/sdk':
+      '@beyondplusmm/doehpos-sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
       '@react-native-async-storage/async-storage':
@@ -62,7 +62,7 @@ importers:
 
   examples/minimal-node:
     dependencies:
-      '@doeh/sdk':
+      '@beyondplusmm/doehpos-sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
 

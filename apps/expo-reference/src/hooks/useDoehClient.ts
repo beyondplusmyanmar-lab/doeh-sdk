@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { DoehClient } from "@doeh/sdk";
+import type { DoehClient } from "@beyondplusmm/doehpos-sdk";
 import { useCredentials } from "@/store/credentials";
 import { makeClient } from "@/api/client";
 

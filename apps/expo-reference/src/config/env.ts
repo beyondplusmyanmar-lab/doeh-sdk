@@ -1,4 +1,4 @@
-import type { Environment } from "@doeh/sdk";
+import type { Environment } from "@beyondplusmm/doehpos-sdk";
 
 export const ENVIRONMENTS: Environment[] = ["sandbox", "production"];
 export const DEFAULT_ENVIRONMENT: Environment = "sandbox";

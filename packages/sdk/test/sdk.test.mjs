@@ -1,4 +1,4 @@
-// Offline unit tests for @doeh/sdk. No network: a fake fetch scripts responses
+// Offline unit tests for @beyondplusmm/doehpos-sdk. No network: a fake fetch scripts responses
 // and records every request so we can assert headers, retry policy, and the
 // idempotency-key-reuse invariant. Run with: pnpm test
 import test from "node:test";

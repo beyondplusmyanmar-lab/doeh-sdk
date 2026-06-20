@@ -1,5 +1,5 @@
 // Metro config for a pnpm workspace: watch the repo root and resolve the
-// hoisted/symlinked @doeh/sdk from the workspace node_modules.
+// hoisted/symlinked @beyondplusmm/doehpos-sdk from the workspace node_modules.
 const { getDefaultConfig } = require("expo/metro-config");
 const path = require("path");
 

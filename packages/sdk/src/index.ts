@@ -1,5 +1,5 @@
 /**
- * @doeh/sdk — official TypeScript SDK for the Doeh POS public API.
+ * @beyondplusmm/doehpos-sdk — official TypeScript SDK for the Doeh POS public API.
  *
  * A typed port of the validated golden client. The stable surface is `delivery`;
  * kitchen/loyalty/marketplace/rider are @experimental until exercised by the

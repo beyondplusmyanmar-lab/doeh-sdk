@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
-import type { Environment } from "@doeh/sdk";
+import type { Environment } from "@beyondplusmm/doehpos-sdk";
 import { DEFAULT_ENVIRONMENT, PREFILL_API_KEY } from "@/config/env";
 
 // The API key is the ONLY credential. There is no shop/org concept — the key

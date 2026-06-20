@@ -1,5 +1,5 @@
 {
-  "name": "@doeh/sdk",
+  "name": "@beyondplusmm/doehpos-sdk",
   "version": "0.1.0",
   "description": "Official TypeScript SDK for the Doeh POS public API — a typed port of the validated golden client.",
   "type": "module",

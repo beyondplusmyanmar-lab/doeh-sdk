@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
-import type { Currency } from "@doeh/sdk";
+import type { Currency } from "@beyondplusmm/doehpos-sdk";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { Body, Button, Card, Field, Muted, Pill, Screen, Title, colors } from "@/components/ui";
 

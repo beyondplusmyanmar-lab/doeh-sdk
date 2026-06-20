@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ScrollView } from "react-native";
-import { generateIdempotencyKey, type OrderResponse } from "@doeh/sdk";
+import { generateIdempotencyKey, type OrderResponse } from "@beyondplusmm/doehpos-sdk";
 import { useDoehClient } from "@/hooks/useDoehClient";
 import { Body, Button, Card, Muted, Pill, Screen, Title, colors } from "@/components/ui";
 

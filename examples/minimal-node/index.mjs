@@ -1,10 +1,10 @@
-// The smallest possible real consumer of @doeh/sdk.
+// The smallest possible real consumer of @beyondplusmm/doehpos-sdk.
 //
 //   export DOEH_API_KEY=sk_test_...
 //   node examples/minimal-node/index.mjs
 //
 // Single shop: the key IS the shop. No shopId anywhere.
-import { DoehClient } from "@doeh/sdk";
+import { DoehClient } from "@beyondplusmm/doehpos-sdk";
 
 const client = new DoehClient({
   apiKey: process.env.DOEH_API_KEY,

@@ -23,10 +23,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build SDK
-        run: pnpm --filter @doeh/sdk build
+        run: pnpm --filter @beyondplusmm/doehpos-sdk build
 
       - name: Unit tests (offline)
-        run: pnpm --filter @doeh/sdk test
+        run: pnpm --filter @beyondplusmm/doehpos-sdk test
 
       - name: Typecheck Expo reference app
         run: pnpm --filter doeh-expo-reference typecheck

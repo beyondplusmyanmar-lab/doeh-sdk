@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { OrderCreate } from "@doeh/sdk";
+import type { OrderCreate } from "@beyondplusmm/doehpos-sdk";
 import { useOfflineQueue } from "./useOfflineQueue";
 
 /**

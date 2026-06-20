@@ -3,7 +3,7 @@
 // the same observable contract as the validated reference.
 //
 //   export DOEH_API_KEY=sk_test_...
-//   pnpm --filter @doeh/sdk test:integration
+//   pnpm --filter @beyondplusmm/doehpos-sdk test:integration
 //
 // Exits 0 iff every step meets its expected contract.
 import {
@@ -26,7 +26,7 @@ const check = (label, ok, detail = "") => {
 const opts = BASE ? { baseUrl: BASE } : { environment: "sandbox" };
 
 async function main() {
-  console.log(`@doeh/sdk integration → ${BASE ?? "sandbox"}`);
+  console.log(`@beyondplusmm/doehpos-sdk integration → ${BASE ?? "sandbox"}`);
 
   // 0. Auth gate — a bogus bearer must be rejected 401 API_KEY_INVALID.
   const bogus = new DoehClient({ apiKey: "sk_test_bogus_does_not_exist", ...opts });
