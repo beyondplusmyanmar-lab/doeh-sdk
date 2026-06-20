@@ -72,9 +72,13 @@ const result = await queue.flush(); // reuses the same key — exactly one order
 `delivery`, `kitchen`, and `loyalty` are the **stable** surface — all exercised
 by the Expo reference app (`kitchen`/`loyalty` graduated in 0.2.0). `marketplace`
 and `rider` remain **`@experimental`** — generated from their OpenAPI specs and
-the golden client, but not yet exercised by the reference app. Modules graduate
-experimental → reference-app-exercised → stable. Evidence promotes an API;
-a schema only permits it.
+the golden client, but not yet exercised by the reference app.
+
+**Promotion rule.** A module graduates to stable when its contract has been
+**observed live in sandbox by at least one authoritative client** (the golden
+client and/or the Phase G synthetic probe) **and** is **exercised by the
+reference app**. The phone is not the verifier — it is another consumer of an
+already-proven contract. Evidence promotes an API; a schema only permits it.
 
 ## Sandbox boundary
 
