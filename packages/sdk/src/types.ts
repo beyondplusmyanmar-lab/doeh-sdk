@@ -99,9 +99,14 @@ export interface OrderTotals {
   grand_total_minor: number;
 }
 
+/** Settlement state of a submitted order. V1 is always "unpaid" (pay_later). */
+export type PaymentStatus = "unpaid" | "paid";
+
 export interface SubmittedOrder {
   id: string;
   status: OrderStatus;
+  /** V1: always "unpaid" — a submission is purchase intent, not settlement. */
+  payment_status: PaymentStatus;
   shop_id: number;
   branch_id: number;
   lines: OrderLine[];

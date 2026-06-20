@@ -14,6 +14,7 @@ Contract: [`openapi/orders.yaml`](../openapi/orders.yaml) · SDK: `client.orders
 | Fulfillment taxonomy | `pickup \| delivery \| dine_in`, snake_case. No `takeaway` (UI maps takeaway→pickup). |
 | Error ABI (422) | `EDGE_EMPTY_ORDER`, `EDGE_UNKNOWN_SKU`, `EDGE_UNPRICED_SKU`, `EDGE_INSUFFICIENT_STOCK` — append-only. |
 | Compatibility | `delivery.create()` stays additive/untouched forever; `orders` is parallel. |
+| Payment (V1) | A submission expresses **purchase intent, not settlement** → created `pay_later`. No payment field in the request; response carries `payment_status` (V1 always `unpaid`). See INV EPIC1-G1-PAY. |
 
 ## 2. Topology — façade, not a second order domain
 
@@ -51,6 +52,25 @@ shadow.
 
 If a behavior would let the edge answer a business question without pos-shop, it
 belongs in pos-shop, not the façade.
+
+### EPIC1-G1-PAY — submission expresses intent, not settlement
+
+`POST /v1/orders` expresses **customer purchase intent**, not financial
+settlement. Settlement remains POS truth.
+
+- **V1:** every submission is created `pay_later`. The request carries **no**
+  payment fields; the response carries `payment_status` (V1 always `unpaid`).
+- **Extensible, not unpaid-forever:** this is the V1 implementation of an
+  extensible payment model — a `payment.mode` (`pay_later | prepaid`, then a
+  provider) may be introduced **additively** later. The contract is not
+  redesigned to add it.
+- **Inventory is out of scope for Epic 1.** Inventory timing follows existing POS
+  `pay_later` behavior (deferred to payment), so `EDGE_INSUFFICIENT_STOCK` does
+  **not** fire at submit in V1. Reserve-on-submit is a separate inventory epic;
+  Epic 1 does not redefine it.
+
+Consequence: no contract change for payment, no settlement semantics leak into
+the SDK, and loyalty can later choose to award on submit / payment / completion.
 
 ## 3. Fulfillment truth table
 

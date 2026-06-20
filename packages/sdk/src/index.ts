@@ -34,6 +34,7 @@ export type {
 // Orders (Sales Submission) capability types — @experimental.
 export type {
   FulfillmentType,
+  PaymentStatus,
   OrderLineInput,
   Customer,
   Fulfillment,

@@ -95,6 +95,10 @@ components:
     OrderStatus:
       type: string
       enum: [pending, confirmed, dispatched, delivered, cancelled]
+    PaymentStatus:
+      type: string
+      description: Settlement state. V1 is always `unpaid` (a submission is purchase intent, not settlement).
+      enum: [unpaid, paid]
     FulfillmentType:
       type: string
       enum: [pickup, delivery, dine_in]
@@ -160,6 +164,7 @@ components:
       properties:
         id: { type: string, example: ord_1c8494e9feeea2c7 }
         status: { $ref: '#/components/schemas/OrderStatus' }
+        payment_status: { $ref: '#/components/schemas/PaymentStatus' }
         shop_id: { type: integer }
         branch_id: { type: integer }
         lines:
