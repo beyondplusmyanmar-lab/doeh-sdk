@@ -39,6 +39,19 @@ pos-shop  SaleService::createSale(shopId, userId, data)   ← SOURCE OF TRUTH
 `GET /v1/orders/{id}` reads back through pos-shop (the Order), not from any edge
 store. **Pricing/inventory/accounting are never reimplemented at the edge.**
 
+### INV-EPIC1-6 — the edge façade MUST NOT persist sales truth
+
+Enforces the Epic-0 conclusion so no future change recreates an `edge_gw.orders`
+shadow.
+
+- **Allowed at the edge:** request validation, an idempotency cache (replay
+  mapping only), correlation/trace IDs, observability metadata.
+- **Forbidden at the edge:** pricing, inventory, promotions, loyalty accrual,
+  accounting journals, **canonical order storage**.
+
+If a behavior would let the edge answer a business question without pos-shop, it
+belongs in pos-shop, not the façade.
+
 ## 3. Fulfillment truth table
 
 | fulfillment | Create Order (Sale) | Create DeliveryOrder |
