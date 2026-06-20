@@ -128,6 +128,17 @@ These are real gaps found by reading pos-shop — Slice 3 must address them:
 5. **Worker authority.** The Slice 5 worker calling Kitchen/Loyalty Cores needs a
    signed, cross-shop principal (EdgeContextMiddleware + `Authz`); idempotency is
    easy (Cores accept `Idempotency-Key` → deterministic `order_{id}→kitchen`).
+6. **Money representation — BLOCKS the response mapping (pre-existing open item).**
+   pos-shop stores amounts as **float major units** (`orders.final_amount` = 15.00);
+   the public contract is **integer minor units** (`grand_total_minor` = 1500). The
+   conversion needs a per-currency exponent map (MMK 0 dp vs THB/USD 2 dp). The edge
+   gateway already flags this as unresolved — *"real POS decimal vs minor-unit
+   exponent map … open 2B.0 addendum, pinned before 2B.2"*
+   (`phase4/core/src/PricingSource.php`, `DatabasePricingSource.php`); there is no
+   float↔minor converter anywhere. **Decision required:** pin the canonical
+   currency→exponent map (one authoritative source, shared edge/core/contract)
+   before the façade can return correct `totals`/`unit_price_minor`. The create
+   path does not need it; the response and read-back do.
 
 ## 8. Sequencing after this doc is accepted
 
