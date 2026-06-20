@@ -42,7 +42,7 @@ away from the contract that was empirically proven.
 | Phase | Scope | Status |
 | --- | --- | --- |
 | **H.1** | `@doeh/sdk`: transport, typed error ABI, idempotency, offline queue, **delivery** module; kitchen/loyalty/marketplace/rider `@experimental` | ✅ done |
-| **H.2** | Expo reference app: paste `sk_test_`, create/read order, offline replay, double-tap dedupe, config-only cutover | ⏭ next |
+| **H.2** | Expo reference app: paste `sk_test_`, create/read order, offline replay, double-tap dedupe, config-only cutover | ✅ done |
 | **H.3** | Public release: npm package + GitHub + docs (fork-and-go) | planned |
 
 ## License

@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Doeh Reference",
+    "slug": "doeh-expo-reference",
+    "scheme": "doehref",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0b1020"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.doeh.expo.reference"
+    },
+    "android": {
+      "package": "com.doeh.expo.reference"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
+  }
+}
