@@ -1,0 +1,173 @@
+openapi: 3.0.3
+info:
+  title: Doeh POS — Kitchen API
+  version: 1.0.0
+  description: >
+    Public kitchen API, served by the edge gateway. Bearer-token auth; shop/branch scope derived
+    from the token. Tickets follow a state machine; `advance` is idempotent by target state.
+servers:
+  - url: https://api.doehpos.com
+    description: production edge
+security:
+  - MerchantAuth: []
+tags:
+  - name: Kitchen
+paths:
+  /v1/kitchen/tickets:
+    post:
+      tags: [Kitchen]
+      operationId: createTicket
+      summary: Create a kitchen ticket
+      description: Idempotent when an Idempotency-Key is supplied.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TicketCreate' }
+      responses:
+        '201':
+          description: Ticket created (status=queued)
+          content: { application/json: { schema: { $ref: '#/components/schemas/TicketResponse' } } }
+        '200':
+          description: Idempotent replay
+          content: { application/json: { schema: { $ref: '#/components/schemas/TicketResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Unprocessable' }  # EDGE_INVALID_STATION, EDGE_INVALID_ITEMS
+  /v1/kitchen/tickets/{id}:
+    get:
+      tags: [Kitchen]
+      operationId: getTicket
+      summary: Read a kitchen ticket
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      responses:
+        '200':
+          description: The ticket
+          content: { application/json: { schema: { $ref: '#/components/schemas/TicketResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }       # EDGE_TICKET_NOT_FOUND
+  /v1/kitchen/tickets/{id}/advance:
+    post:
+      tags: [Kitchen]
+      operationId: advanceTicket
+      summary: Advance a ticket's status
+      description: >
+        Transition the ticket. Idempotent by target state — advancing to the current status is a
+        no-op (200). Illegal transitions are rejected.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TicketAdvance' }
+      responses:
+        '200':
+          description: Advanced (or idempotent no-op)
+          content: { application/json: { schema: { $ref: '#/components/schemas/TicketResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }     # EDGE_BAD_STATUS, EDGE_PATH_BODY_MISMATCH
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }       # EDGE_ILLEGAL_TRANSITION
+components:
+  securitySchemes:
+    MerchantAuth:
+      type: http
+      scheme: bearer
+      description: Merchant API token. Shop/branch scope derived from the token.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, maxLength: 200 }
+    TraceId:
+      name: Trace-Id
+      in: header
+      required: false
+      schema: { type: string }
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[A-Za-z0-9_]+$' }
+  schemas:
+    TicketStatus:
+      type: string
+      enum: [queued, preparing, ready, served, cancelled]
+    TicketCreate:
+      type: object
+      required: [station, items]
+      properties:
+        station: { type: string, minLength: 1, example: grill }
+        items:
+          type: array
+          minItems: 1
+          items: { type: string }
+          example: [burger, fries]
+    TicketAdvance:
+      type: object
+      required: [to]
+      properties:
+        to: { $ref: '#/components/schemas/TicketStatus' }
+    Ticket:
+      type: object
+      properties:
+        id: { type: string, example: tkt_14b39bffc4dcde62 }
+        status: { $ref: '#/components/schemas/TicketStatus' }
+        shop_id: { type: integer }
+        branch_id: { type: integer }
+        station: { type: string }
+        items: { type: array, items: { type: string } }
+        created_at_utc: { type: string, format: date-time }
+        created_at_local: { type: string }
+        idempotency_key: { type: string }
+    TicketResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        idempotent: { type: boolean }
+        ticket: { $ref: '#/components/schemas/Ticket' }
+    Error:
+      type: object
+      properties:
+        ok: { type: boolean, example: false }
+        code: { type: string, description: Stable, append-only error code (API ABI). }
+        from: { type: string, description: 'on EDGE_ILLEGAL_TRANSITION: current status' }
+        to: { type: string, description: 'on EDGE_ILLEGAL_TRANSITION: rejected target' }
+  responses:
+    BadRequest:
+      description: Malformed request
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: >
+        Merchant authentication failed. `code` is one of the API_KEY_* values below (stable,
+        append-only ABI). Internal edge↔Core signature/transport errors are not part of the
+        public contract.
+      x-error-codes: [API_KEY_INVALID, API_KEY_EXPIRED, API_KEY_REVOKED, API_KEY_ENV_MISMATCH]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: >
+        Authenticated, but the key's effective scope does not permit this operation
+        (scope is server-derived from the token; clients never send it).
+      x-error-codes: [API_KEY_SCOPE_DENIED]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource not found (or not visible to this scope)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Illegal state transition
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unprocessable:
+      description: Validation failed
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

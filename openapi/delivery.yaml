@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Doeh POS — Delivery API
+  version: 1.0.0
+  description: >
+    Public delivery API, served by the edge gateway. Authentication is a merchant bearer token;
+    the shop/branch scope is derived from the token server-side (clients never send scope). Money
+    is integer minor units. Error codes are a stable, append-only ABI — never renamed or reused.
+servers:
+  - url: https://api.doehpos.com
+    description: production edge
+security:
+  - MerchantAuth: []
+tags:
+  - name: Delivery
+paths:
+  /v1/delivery/orders:
+    post:
+      tags: [Delivery]
+      operationId: createOrder
+      summary: Create a delivery order
+      description: Idempotent when an Idempotency-Key is supplied (a retry returns the original order).
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCreate' }
+      responses:
+        '201':
+          description: Order created
+          content: { application/json: { schema: { $ref: '#/components/schemas/OrderResponse' } } }
+        '200':
+          description: Idempotent replay — the original order (idempotent=true)
+          content: { application/json: { schema: { $ref: '#/components/schemas/OrderResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }      # EDGE_BAD_BODY
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }       # API_KEY_SCOPE_DENIED, EDGE_TRANSPORT_DISABLED (branch transport off)
+        '409': { $ref: '#/components/responses/Conflict' }        # EDGE_REPLAYED
+        '422': { $ref: '#/components/responses/Unprocessable' }   # EDGE_INVALID_AMOUNT, EDGE_UNSUPPORTED_CURRENCY
+  /v1/delivery/orders/{id}:
+    get:
+      tags: [Delivery]
+      operationId: getOrder
+      summary: Read a delivery order
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      responses:
+        '200':
+          description: The order
+          content: { application/json: { schema: { $ref: '#/components/schemas/OrderResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }        # EDGE_ORDER_NOT_FOUND (also returned cross-branch — no existence leak)
+components:
+  securitySchemes:
+    MerchantAuth:
+      type: http
+      scheme: bearer
+      description: Merchant API token. The shop/branch scope is derived from the token, not from request headers.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Per-operation key. Strongly recommended on POST; enables safe retries (dedupe).
+      schema: { type: string, maxLength: 200 }
+    TraceId:
+      name: Trace-Id
+      in: header
+      required: false
+      description: Caller trace id, propagated and echoed on the response.
+      schema: { type: string }
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[A-Za-z0-9_]+$' }
+  schemas:
+    Currency:
+      type: string
+      enum: [MMK, THB, USD, CNY, SGD, INR]
+    OrderStatus:
+      type: string
+      enum: [pending, confirmed, dispatched, delivered, cancelled]
+    OrderCreate:
+      type: object
+      required: [currency, amount_minor]
+      properties:
+        currency: { $ref: '#/components/schemas/Currency' }
+        amount_minor:
+          type: integer
+          minimum: 1
+          description: Amount in integer minor units (e.g. 1500 = 15.00). Never a decimal.
+    Order:
+      type: object
+      properties:
+        id: { type: string, example: ord_1c8494e9feeea2c7 }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        shop_id: { type: integer }
+        branch_id: { type: integer }
+        currency: { $ref: '#/components/schemas/Currency' }
+        amount_minor: { type: integer }
+        created_at_utc: { type: string, format: date-time }
+        created_at_local:
+          type: string
+          description: created_at rendered in the branch's native timezone.
+        idempotency_key: { type: string }
+    OrderResponse:
+      type: object
+      properties:
+        ok: { type: boolean, example: true }
+        idempotent: { type: boolean, description: true if this was an idempotent replay }
+        order: { $ref: '#/components/schemas/Order' }
+    Error:
+      type: object
+      properties:
+        ok: { type: boolean, example: false }
+        code:
+          type: string
+          description: Stable, append-only error code (part of the API ABI).
+        step: { type: string, description: internal verification step (diagnostic only) }
+  responses:
+    BadRequest:
+      description: Malformed request
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: >
+        Merchant authentication failed. `code` is one of the API_KEY_* values below (stable,
+        append-only ABI). Internal edge↔Core signature/transport errors are not part of the
+        public contract.
+      x-error-codes: [API_KEY_INVALID, API_KEY_EXPIRED, API_KEY_REVOKED, API_KEY_ENV_MISMATCH]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: >
+        Authenticated, but not permitted: either the key's effective scope does not permit this
+        operation (API_KEY_SCOPE_DENIED, server-derived; clients never send scope) or — on order
+        creation — the branch is not currently participating in transport/delivery
+        (EDGE_TRANSPORT_DISABLED, a per-branch operational rule).
+      x-error-codes: [API_KEY_SCOPE_DENIED, EDGE_TRANSPORT_DISABLED]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource not found (or not visible to this scope)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Replay or state conflict
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unprocessable:
+      description: Validation failed
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

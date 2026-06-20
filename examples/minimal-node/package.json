@@ -1,0 +1,13 @@
+{
+  "name": "doeh-minimal-node",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Smallest real consumer of @doeh/sdk.",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@doeh/sdk": "workspace:*"
+  }
+}

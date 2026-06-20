@@ -1,0 +1,15 @@
+{
+  "name": "doeh-sdk-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Doeh POS public SDK + Expo reference app (fork-and-go).",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Doeh POS — Marketplace API
+  version: 1.0.0
+  description: >
+    Public marketplace API, served by the edge gateway. Bearer-token auth; shop scope derived from
+    the token. Listings are shop-scoped. Purchases atomically decrement stock and never oversell
+    (concurrency-safe); purchase is idempotent by key. Prices are integer minor units.
+servers:
+  - url: https://api.doehpos.com
+    description: production edge
+security:
+  - MerchantAuth: []
+tags:
+  - name: Marketplace
+paths:
+  /v1/marketplace/listings:
+    post:
+      tags: [Marketplace]
+      operationId: createListing
+      summary: Create a listing
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/ListingCreate' } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/ListingResponse' } } } }
+        '200': { description: Idempotent replay, content: { application/json: { schema: { $ref: '#/components/schemas/ListingResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Unprocessable' }  # EDGE_INVALID_LISTING/PRICE/STOCK, EDGE_UNSUPPORTED_CURRENCY
+  /v1/marketplace/listings/{id}:
+    get:
+      tags: [Marketplace]
+      operationId: getListing
+      summary: Read a listing
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      responses:
+        '200': { description: The listing, content: { application/json: { schema: { $ref: '#/components/schemas/ListingResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }       # EDGE_LISTING_NOT_FOUND
+  /v1/marketplace/listings/{id}/purchase:
+    post:
+      tags: [Marketplace]
+      operationId: purchaseListing
+      summary: Purchase units from a listing
+      description: >
+        Atomically decrements stock. Never oversells under concurrency. Idempotent by key — a
+        retried purchase does not decrement again. Rejected if the listing is sold out or delisted.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Purchase' } } }
+      responses:
+        '200': { description: Purchased, content: { application/json: { schema: { $ref: '#/components/schemas/PurchaseResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }       # EDGE_INSUFFICIENT_STOCK, EDGE_LISTING_UNAVAILABLE
+        '422': { $ref: '#/components/responses/Unprocessable' }  # EDGE_INVALID_QTY
+  /v1/marketplace/listings/{id}/delist:
+    post:
+      tags: [Marketplace]
+      operationId: delistListing
+      summary: Delist a listing (vendor)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      responses:
+        '200': { description: Delisted (idempotent), content: { application/json: { schema: { $ref: '#/components/schemas/ListingResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+components:
+  securitySchemes:
+    MerchantAuth:
+      type: http
+      scheme: bearer
+      description: Merchant API token. Shop scope derived from the token.
+  parameters:
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: false, schema: { type: string, maxLength: 200 } }
+    TraceId: { name: Trace-Id, in: header, required: false, schema: { type: string } }
+    PathId: { name: id, in: path, required: true, schema: { type: string, pattern: '^[A-Za-z0-9_]+$' } }
+  schemas:
+    Currency: { type: string, enum: [MMK, THB, USD, CNY, SGD, INR] }
+    ListingStatus: { type: string, enum: [active, sold_out, delisted] }
+    ListingCreate:
+      type: object
+      required: [title, currency, price_minor, stock]
+      properties:
+        title: { type: string, minLength: 1 }
+        currency: { $ref: '#/components/schemas/Currency' }
+        price_minor: { type: integer, minimum: 1, description: integer minor units }
+        stock: { type: integer, minimum: 0 }
+    Purchase:
+      type: object
+      required: [qty]
+      properties:
+        qty: { type: integer, minimum: 1 }
+    Listing:
+      type: object
+      properties:
+        id: { type: string, example: lst_7718e897cb4c619f }
+        status: { $ref: '#/components/schemas/ListingStatus' }
+        shop_id: { type: integer }
+        branch_id: { type: integer }
+        title: { type: string }
+        currency: { $ref: '#/components/schemas/Currency' }
+        price_minor: { type: integer }
+        stock: { type: integer, description: remaining units (never negative) }
+        sold: { type: integer }
+        created_at_utc: { type: string, format: date-time }
+        created_at_local: { type: string }
+    ListingResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        idempotent: { type: boolean }
+        listing: { $ref: '#/components/schemas/Listing' }
+    PurchaseResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        idempotent: { type: boolean }
+        purchased: { type: integer }
+        listing: { $ref: '#/components/schemas/Listing' }
+    Error:
+      type: object
+      properties:
+        ok: { type: boolean, example: false }
+        code: { type: string, description: Stable, append-only error code (API ABI). }
+        stock: { type: integer, description: 'on EDGE_INSUFFICIENT_STOCK: remaining stock' }
+        status: { type: string, description: 'on EDGE_LISTING_UNAVAILABLE: current status' }
+  responses:
+    BadRequest: { description: Malformed request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Unauthorized:
+      description: >
+        Merchant authentication failed. `code` is one of the API_KEY_* values below (stable,
+        append-only ABI). Internal edge↔Core signature/transport errors are not part of the
+        public contract.
+      x-error-codes: [API_KEY_INVALID, API_KEY_EXPIRED, API_KEY_REVOKED, API_KEY_ENV_MISMATCH]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: >
+        Authenticated, but the key's effective scope does not permit this operation
+        (scope is server-derived from the token; clients never send it).
+      x-error-codes: [API_KEY_SCOPE_DENIED]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound: { description: Listing not found (or not visible to this scope), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Conflict: { description: Insufficient stock or listing unavailable, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Unprocessable: { description: Validation failed, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

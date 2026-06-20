@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: Doeh POS — Rider API
+  version: 1.0.0
+  description: >
+    Public rider API, served by the edge gateway. Bearer-token auth; shop scope derived from the
+    token. A job is claimed (accepted) by exactly one rider — concurrent claims are resolved
+    atomically. Only the assigned rider may advance the job (actor-ownership).
+servers:
+  - url: https://api.doehpos.com
+    description: production edge
+security:
+  - MerchantAuth: []
+tags:
+  - name: Rider
+paths:
+  /v1/rider/jobs:
+    post:
+      tags: [Rider]
+      operationId: createJob
+      summary: Create a delivery job (offered)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/JobCreate' } } }
+      responses:
+        '201': { description: Created (status=offered), content: { application/json: { schema: { $ref: '#/components/schemas/JobResponse' } } } }
+        '200': { description: Idempotent replay, content: { application/json: { schema: { $ref: '#/components/schemas/JobResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Unprocessable' }  # EDGE_INVALID_JOB
+  /v1/rider/jobs/{id}:
+    get:
+      tags: [Rider]
+      operationId: getJob
+      summary: Read a job
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      responses:
+        '200': { description: The job, content: { application/json: { schema: { $ref: '#/components/schemas/JobResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }       # EDGE_JOB_NOT_FOUND
+  /v1/rider/jobs/{id}/accept:
+    post:
+      tags: [Rider]
+      operationId: acceptJob
+      summary: Claim a job (exclusive)
+      description: First rider to accept wins. Subsequent claims are rejected as already assigned.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Accept' } } }
+      responses:
+        '200': { description: Accepted (or idempotent re-accept by the same rider), content: { application/json: { schema: { $ref: '#/components/schemas/JobResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }       # EDGE_JOB_ALREADY_ASSIGNED
+        '422': { $ref: '#/components/responses/Unprocessable' }  # EDGE_INVALID_RIDER
+  /v1/rider/jobs/{id}/advance:
+    post:
+      tags: [Rider]
+      operationId: advanceJob
+      summary: Advance a job's status (owning rider only)
+      description: >
+        Only the assigned rider may advance. Idempotent by target state. Illegal transitions are
+        rejected. accepted -> picked_up -> delivered.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Advance' } } }
+      responses:
+        '200': { description: Advanced (or idempotent no-op), content: { application/json: { schema: { $ref: '#/components/schemas/JobResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }     # EDGE_BAD_STATUS, EDGE_PATH_BODY_MISMATCH
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }      # EDGE_NOT_JOB_OWNER
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }       # EDGE_ILLEGAL_TRANSITION
+        '422': { $ref: '#/components/responses/Unprocessable' }  # EDGE_INVALID_RIDER
+components:
+  securitySchemes:
+    MerchantAuth:
+      type: http
+      scheme: bearer
+      description: Merchant API token. Shop scope derived from the token.
+  parameters:
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: false, schema: { type: string, maxLength: 200 } }
+    TraceId: { name: Trace-Id, in: header, required: false, schema: { type: string } }
+    PathId: { name: id, in: path, required: true, schema: { type: string, pattern: '^[A-Za-z0-9_]+$' } }
+  schemas:
+    JobStatus: { type: string, enum: [offered, accepted, picked_up, delivered, cancelled] }
+    JobCreate:
+      type: object
+      required: [pickup, dropoff]
+      properties:
+        pickup: { type: string, minLength: 1 }
+        dropoff: { type: string, minLength: 1 }
+    Accept:
+      type: object
+      required: [rider_id]
+      properties:
+        rider_id: { type: string, minLength: 1 }
+    Advance:
+      type: object
+      required: [rider_id, to]
+      properties:
+        rider_id: { type: string, minLength: 1 }
+        to: { $ref: '#/components/schemas/JobStatus' }
+    Job:
+      type: object
+      properties:
+        id: { type: string, example: job_b5b4543a7aa5df79 }
+        status: { $ref: '#/components/schemas/JobStatus' }
+        rider_id: { type: string, nullable: true, description: assigned rider (null until accepted) }
+        shop_id: { type: integer }
+        branch_id: { type: integer }
+        pickup: { type: string }
+        dropoff: { type: string }
+        created_at_utc: { type: string, format: date-time }
+        created_at_local: { type: string }
+    JobResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        idempotent: { type: boolean }
+        job: { $ref: '#/components/schemas/Job' }
+    Error:
+      type: object
+      properties:
+        ok: { type: boolean, example: false }
+        code: { type: string, description: Stable, append-only error code (API ABI). }
+        rider_id: { type: string, description: 'on EDGE_JOB_ALREADY_ASSIGNED: the assigned rider' }
+        from: { type: string }
+        to: { type: string }
+  responses:
+    BadRequest: { description: Malformed request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Unauthorized:
+      description: >
+        Merchant authentication failed. `code` is one of the API_KEY_* values below (stable,
+        append-only ABI). Internal edge↔Core signature/transport errors are not part of the
+        public contract.
+      x-error-codes: [API_KEY_INVALID, API_KEY_EXPIRED, API_KEY_REVOKED, API_KEY_ENV_MISMATCH]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: >
+        Authenticated, but not permitted: either the key's effective scope does not cover this
+        operation (API_KEY_SCOPE_DENIED, server-derived) or the caller is not the owning rider
+        (EDGE_NOT_JOB_OWNER, a business-ownership rule).
+      x-error-codes: [API_KEY_SCOPE_DENIED, EDGE_NOT_JOB_OWNER]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound: { description: Job not found (or not visible to this scope), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Conflict: { description: Already assigned or illegal transition, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Unprocessable: { description: Validation failed, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }

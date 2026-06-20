@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: Doeh POS — Loyalty API
+  version: 1.0.0
+  description: >
+    Public loyalty API, served by the edge gateway. Bearer-token auth. Balances are SHOP-scoped:
+    a member's points are shared across all branches of a shop and isolated across shops. Points
+    are integers; the ledger is append-only; redeem cannot exceed balance.
+servers:
+  - url: https://api.doehpos.com
+    description: production edge
+security:
+  - MerchantAuth: []
+tags:
+  - name: Loyalty
+paths:
+  /v1/loyalty/members/{id}/earn:
+    post:
+      tags: [Loyalty]
+      operationId: earnPoints
+      summary: Accrue points for a member
+      description: Idempotent when an Idempotency-Key is supplied.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PointsOp' }
+      responses:
+        '200':
+          description: Updated account
+          content: { application/json: { schema: { $ref: '#/components/schemas/AccountResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Unprocessable' }  # EDGE_INVALID_POINTS
+  /v1/loyalty/members/{id}/redeem:
+    post:
+      tags: [Loyalty]
+      operationId: redeemPoints
+      summary: Redeem points for a member
+      description: >
+        Idempotent when an Idempotency-Key is supplied — a retried redeem never double-spends.
+        Redeeming more than the balance is rejected; no ledger entry is written.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PointsOp' }
+      responses:
+        '200':
+          description: Updated account
+          content: { application/json: { schema: { $ref: '#/components/schemas/AccountResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }       # EDGE_INSUFFICIENT_POINTS
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /v1/loyalty/members/{id}:
+    get:
+      tags: [Loyalty]
+      operationId: getMember
+      summary: Read a member's balance and recent ledger
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      responses:
+        '200':
+          description: The member account
+          content: { application/json: { schema: { $ref: '#/components/schemas/AccountReadResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }       # EDGE_MEMBER_NOT_FOUND
+components:
+  securitySchemes:
+    MerchantAuth:
+      type: http
+      scheme: bearer
+      description: Merchant API token. Shop scope derived from the token.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, maxLength: 200 }
+    TraceId:
+      name: Trace-Id
+      in: header
+      required: false
+      schema: { type: string }
+    PathId:
+      name: id
+      in: path
+      required: true
+      description: Member id.
+      schema: { type: string, pattern: '^[A-Za-z0-9_]+$' }
+  schemas:
+    PointsOp:
+      type: object
+      required: [points]
+      properties:
+        points:
+          type: integer
+          minimum: 1
+          description: Whole points (never a decimal).
+        reason: { type: string }
+    LedgerEntry:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [earn, redeem] }
+        points: { type: integer }
+        reason: { type: string }
+        branch_id: { type: integer, description: where it happened (recorded, not scoping) }
+        at: { type: string, format: date-time }
+    Account:
+      type: object
+      properties:
+        shop_id: { type: integer }
+        member_id: { type: string }
+        balance: { type: integer, description: never negative }
+        entries: { type: integer, description: total ledger entries }
+        ledger:
+          type: array
+          description: most recent entries (append-only)
+          items: { $ref: '#/components/schemas/LedgerEntry' }
+    AccountResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        idempotent: { type: boolean }
+        account: { $ref: '#/components/schemas/Account' }
+    AccountReadResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        account: { $ref: '#/components/schemas/Account' }
+    Error:
+      type: object
+      properties:
+        ok: { type: boolean, example: false }
+        code: { type: string, description: Stable, append-only error code (API ABI). }
+        balance: { type: integer, description: 'on EDGE_INSUFFICIENT_POINTS: current balance' }
+  responses:
+    BadRequest:
+      description: Malformed request
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: >
+        Merchant authentication failed. `code` is one of the API_KEY_* values below (stable,
+        append-only ABI). Internal edge↔Core signature/transport errors are not part of the
+        public contract.
+      x-error-codes: [API_KEY_INVALID, API_KEY_EXPIRED, API_KEY_REVOKED, API_KEY_ENV_MISMATCH]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: >
+        Authenticated, but the key's effective scope does not permit this operation
+        (scope is server-derived from the token; clients never send it).
+      x-error-codes: [API_KEY_SCOPE_DENIED]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Member has no account in this shop
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Insufficient points
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unprocessable:
+      description: Validation failed
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
