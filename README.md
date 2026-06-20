@@ -44,6 +44,43 @@ export DOEH_API_KEY=sk_test_...
 pnpm --filter @beyondplusmm/doehpos-sdk test:integration  # live sandbox matrix
 ```
 
+## Reference applications
+
+Two runnable consumers ship in this repo. The Expo app is the **mobile golden
+client** — the canonical, end-to-end integration to fork and adapt.
+
+### Mobile golden client — `apps/expo-reference`
+
+An Expo Router app demonstrating the full integration, exercised against the
+published SDK (`expo export` builds it into a real native bundle):
+
+- SDK initialization
+- Secure API key storage (`expo-secure-store`)
+- Delivery order creation and read-back
+- Offline queue with idempotent replay
+- Automatic flush on reconnect
+- Typed error handling (catch `InvalidAmountError` etc. — never parse `code`)
+- Sandbox ↔ production cutover is config-only
+
+```bash
+# from the repo root — the app imports the *built* workspace SDK
+pnpm install
+pnpm --filter @beyondplusmm/doehpos-sdk build
+cd apps/expo-reference
+npx expo start          # press i / a / w for iOS / Android / web
+```
+
+Then open **Settings**, paste an `sk_test_` key, and Save.
+
+### Minimal backend consumer — `examples/minimal-node`
+
+The smallest real Node consumer of the SDK — start here for a server-side
+integration.
+
+> The original first-party Python golden client (`doeh_demo_client.py`) lives in
+> the product repo's `developer-portal/examples/golden-client`; it is the source
+> this SDK was ported from (see Provenance below), not shipped here.
+
 ## Provenance
 
 The SDK is a faithful port of the first-party **golden client** (originally a
