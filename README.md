@@ -70,7 +70,9 @@ cd apps/expo-reference
 npx expo start          # press i / a / w for iOS / Android / web
 ```
 
-Then open **Settings**, paste an `sk_test_` key, and Save.
+Then open **Settings**, paste an `sk_test_` key, and Save. For a step-by-step
+walkthrough (including the offline-queue demo), see the
+[five-minute quickstart](docs/QUICKSTART.md).
 
 ### Minimal backend consumer — `examples/minimal-node`
 
