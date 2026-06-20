@@ -41,6 +41,8 @@ export default function RootLayout() {
             <Stack.Screen name="create" options={{ title: "Create order" }} />
             <Stack.Screen name="order/[id]" options={{ title: "Order" }} />
             <Stack.Screen name="idempotency" options={{ title: "Idempotency demo" }} />
+            <Stack.Screen name="kitchen" options={{ title: "Kitchen" }} />
+            <Stack.Screen name="loyalty" options={{ title: "Loyalty" }} />
           </Stack>
         </CredentialsProvider>
       </QueryClientProvider>

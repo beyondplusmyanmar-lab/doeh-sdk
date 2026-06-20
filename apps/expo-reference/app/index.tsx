@@ -49,6 +49,18 @@ export default function Home() {
             variant="ghost"
             disabled={!configured}
           />
+          <Button
+            title="Kitchen ticket (experimental)"
+            onPress={() => router.push("/kitchen")}
+            variant="ghost"
+            disabled={!configured}
+          />
+          <Button
+            title="Loyalty points (experimental)"
+            onPress={() => router.push("/loyalty")}
+            variant="ghost"
+            disabled={!configured}
+          />
           <Link href="/settings" asChild>
             <Button title="Settings" onPress={() => router.push("/settings")} variant="ghost" />
           </Link>
