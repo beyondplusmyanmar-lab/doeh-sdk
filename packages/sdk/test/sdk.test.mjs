@@ -169,3 +169,49 @@ test("OfflineQueue dead-letters a terminal 4xx instead of looping forever", asyn
   assert.ok(r.deadLettered[0].error instanceof InvalidAmountError);
   assert.equal((await q.pending()).length, 0); // removed, not retried forever
 });
+
+// ── orders (sales submission) capability — @experimental ─────────────────────
+test("orders.submit posts a basket to /v1/orders with idempotency + bearer", async () => {
+  const f = makeFetch();
+  f.setBehavior(() => ({
+    status: 201,
+    body: { ok: true, order: { id: "ord_sub1", totals: { grand_total_minor: 16800 } } },
+  }));
+  const c = client(f);
+  const submission = { lines: [{ sku: "BURGER001", qty: 2 }, { sku: "COLA001", qty: 1 }] };
+  const res = await c.orders.submit(submission, { idempotencyKey: "sub-123" });
+  assert.equal(res.order.id, "ord_sub1");
+  const { url, init, headers } = f.calls[0];
+  assert.equal(url, "https://sandbox-api.doehpos.com/v1/orders");
+  assert.equal(init.method, "POST");
+  assert.equal(headers["Authorization"], "Bearer sk_test_unit");
+  assert.equal(headers["Idempotency-Key"], "sub-123");
+  // the basket goes up verbatim — no client-side price or total is ever sent
+  assert.deepEqual(JSON.parse(init.body), submission);
+  assert.equal(JSON.parse(init.body).amount_minor, undefined);
+});
+
+test("orders.submit rejects an empty basket client-side (no request sent)", async () => {
+  const f = makeFetch();
+  const c = client(f);
+  await assert.rejects(() => c.orders.submit({ lines: [] }), RangeError);
+  assert.equal(f.calls.length, 0);
+});
+
+test("orders.submit rejects a bad line (qty < 1 / empty sku) client-side", async () => {
+  const f = makeFetch();
+  const c = client(f);
+  await assert.rejects(() => c.orders.submit({ lines: [{ sku: "X", qty: 0 }] }), RangeError);
+  await assert.rejects(() => c.orders.submit({ lines: [{ sku: "", qty: 1 }] }), RangeError);
+  assert.equal(f.calls.length, 0);
+});
+
+test("orders catalog error codes map to typed classes", async () => {
+  const { UnknownSkuError, UnpricedSkuError, EmptyOrderError, InsufficientStockError } = await import(
+    "../dist/index.js"
+  );
+  assert.ok(mapApiError(422, { code: "EDGE_UNKNOWN_SKU" }) instanceof UnknownSkuError);
+  assert.ok(mapApiError(422, { code: "EDGE_UNPRICED_SKU" }) instanceof UnpricedSkuError);
+  assert.ok(mapApiError(422, { code: "EDGE_EMPTY_ORDER" }) instanceof EmptyOrderError);
+  assert.ok(mapApiError(422, { code: "EDGE_INSUFFICIENT_STOCK" }) instanceof InsufficientStockError);
+});

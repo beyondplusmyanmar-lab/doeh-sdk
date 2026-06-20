@@ -31,6 +31,19 @@ export type {
   CallOptions,
 } from "./types.js";
 
+// Orders (Sales Submission) capability types — @experimental.
+export type {
+  FulfillmentType,
+  OrderLineInput,
+  Customer,
+  Fulfillment,
+  SalesSubmission,
+  OrderLine,
+  OrderTotals,
+  SubmittedOrder,
+  SubmissionResponse,
+} from "./types.js";
+
 // Error ABI — consumers catch these classes, never parse `code` strings.
 export {
   DoehError,
@@ -47,6 +60,10 @@ export {
   InvalidAmountError,
   UnsupportedCurrencyError,
   BadBodyError,
+  EmptyOrderError,
+  UnknownSkuError,
+  UnpricedSkuError,
+  InsufficientStockError,
   RateLimitedError,
   isRetryable,
   mapApiError,
@@ -62,3 +79,4 @@ export {
   type ListingResponse,
 } from "./modules/experimental/marketplace.js";
 export { RiderModule, type JobCreate, type JobResponse } from "./modules/experimental/rider.js";
+export { OrdersModule } from "./modules/experimental/orders.js";

@@ -72,7 +72,10 @@ const result = await queue.flush(); // reuses the same key — exactly one order
 `delivery`, `kitchen`, and `loyalty` are the **stable** surface — all exercised
 by the Expo reference app (`kitchen`/`loyalty` graduated in 0.2.0). `marketplace`
 and `rider` remain **`@experimental`** — generated from their OpenAPI specs and
-the golden client, but not yet exercised by the reference app.
+the golden client, but not yet exercised by the reference app. The **`orders`**
+capability (server-priced sales submission, `POST /v1/orders`) is also
+**`@experimental`** and **not yet live** — its edge façade over the POS sale
+aggregate is not built; the typed surface ships ahead of the backend.
 
 **Promotion rule.** A module graduates to stable when its contract has been
 **observed live in sandbox by at least one authoritative client** (the golden
