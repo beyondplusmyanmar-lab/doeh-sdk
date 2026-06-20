@@ -136,12 +136,49 @@ These are real gaps found by reading pos-shop — Slice 3 must address them:
    exponent map … open 2B.0 addendum, pinned before 2B.2"*
    (`phase4/core/src/PricingSource.php`, `DatabasePricingSource.php`); there is no
    float↔minor converter anywhere. **Decision required:** pin the canonical
-   currency→exponent map (one authoritative source, shared edge/core/contract)
-   before the façade can return correct `totals`/`unit_price_minor`. The create
-   path does not need it; the response and read-back do.
+   currency→exponent map before the façade can return correct
+   `totals`/`unit_price_minor`. **RESOLVED — see INV-2B.0 below.**
 
 ## 8. Sequencing after this doc is accepted
 
 S3 façade (pickup/dine_in first — Order only) → idempotency (#1) → S4 outbox (#2)
 → S5 worker (Order→Kitchen→Loyalty) → then additive `delivery` fulfillment (#4) +
 Order→Rider. Each step is mechanical given the decisions above.
+
+## INV-2B.0 — Money canonicalization (locked)
+
+Pinned before Slice 3.2. Public money is a stable ABI; the exponent map must not
+change after exposure.
+
+- **INV-MONEY-1 — public APIs speak minor units only.** `grand_total_minor`,
+  `tax_minor`, `unit_price_minor` are integers. Floats are never exposed.
+- **INV-MONEY-2 — POS internals keep decimal storage.** `orders.final_amount`
+  etc. stay float; no PM-scale migration.
+- **INV-MONEY-3 — one exponent authority, which ALREADY EXISTS.** The canonical
+  source is the **`supported_currencies.decimal_places`** table (on the `shared`
+  connection), seeded by `2026_05_17_000041_currency_phase1_schema`. It is
+  already mirrored (read-only) by `pos-bo App\Support\Money::META`,
+  `pos-webapp money.js`, and the BO report views. **Do NOT introduce a new
+  `CurrencyExponent` enum** — that would be a sixth mirror. Codecs derive from
+  this table; any language mirror (future Go/TS) must equal it (drift is the
+  known CURRENCY_META hazard).
+- **INV-MONEY-4 — convert only at boundaries.** Minor↔decimal happens at
+  ingress/egress, never inside business logic. **Epic 1 needs egress only** (the
+  request carries no money; the server prices internally in float; the response
+  converts float→minor). No ingress codec, and no Go/TS codec, are required yet.
+
+**Verified exponent map** (DB seed + `Money::META` + report views all agree):
+
+| Currency | Exponent |
+| --- | --- |
+| MMK | 0 |
+| THB / USD / CNY / SGD / INR | 2 |
+| JPY | 0 (reserved; not in the active set) |
+
+MMK = 0 is confirmed by ledger/reporting truth (MMK is operationally an integer
+currency), not assumed.
+
+**Implementation (Epic 1):** `pos-shop App\Support\MoneyCodec` — `toMinor(amount,
+currency)` / `toDecimal(minor, currency)` reading (and caching)
+`supported_currencies.decimal_places`. The façade response maps `final_amount`,
+`tax_amount`, line `subtotal`/`unit_price` through `toMinor`.
