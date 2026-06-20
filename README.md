@@ -34,6 +34,10 @@ rider — as independent SDK modules over a stable contract.
   server's job as business truth — not a chain of calls composed on the device.
   Clients compose *capabilities*, not transactions.
 
+> **The principle, stated plainly.** SDK capabilities are composable primitives.
+> Consumers may compose user experiences. Integrity-critical business workflows
+> remain server-owned. DOEH APIs expose capabilities, not distributed transactions.
+
 The artifacts here serve that model: the **SDK** is typed transport, the
 **Expo reference app** is a teaching client that intentionally exposes SDK
 concepts (`minor units`, idempotency, `ScopeDeniedError`), and the OpenAPI specs
