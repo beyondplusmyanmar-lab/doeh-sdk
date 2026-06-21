@@ -30,13 +30,11 @@ Then open **Settings**, paste a `sk_test_` key, keep the environment on
 | Validation rendered nicely | `app/create.tsx` outcome card (typed errors) |
 | Survives API restart | retries are transport/429-only; the queue holds the rest |
 | Sandbox → production is config-only | `app/settings.tsx` environment toggle |
-| Kitchen ticket create + read-back (experimental) | `app/kitchen.tsx` → `src/hooks/useKitchen.ts` |
-| Loyalty earn + balance read-back (experimental) | `app/loyalty.tsx` → `src/hooks/useLoyalty.ts` |
+| Loyalty earn + balance read-back | `app/loyalty.tsx` → `src/hooks/useLoyalty.ts` |
 
-> **Experimental modules.** Kitchen and Loyalty exercise the `client.kitchen`
-> and `client.loyalty` surfaces (still `@experimental` in the SDK). They are
-> direct calls — not routed through the delivery offline queue — and surface
-> typed errors, including `ScopeDeniedError` when the key lacks the module.
+> **Loyalty module.** `app/loyalty.tsx` exercises the `client.loyalty` surface.
+> The calls are direct — not routed through the delivery offline queue — and
+> surface typed errors, including `ScopeDeniedError` when the key lacks the module.
 
 ## Architecture
 

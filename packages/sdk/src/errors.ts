@@ -75,6 +75,13 @@ export class InvalidAmountError extends DoehApiError {} // EDGE_INVALID_AMOUNT
 export class UnsupportedCurrencyError extends DoehApiError {} // EDGE_UNSUPPORTED_CURRENCY
 export class BadBodyError extends DoehApiError {} // EDGE_BAD_BODY
 
+// ── 422 — sales submission / catalog (Orders capability, @experimental) ───────
+export class EmptyOrderError extends DoehApiError {} // EDGE_EMPTY_ORDER
+export class UnknownSkuError extends DoehApiError {} // EDGE_UNKNOWN_SKU
+export class UnpricedSkuError extends DoehApiError {} // EDGE_UNPRICED_SKU
+export class InsufficientStockError extends DoehApiError {} // EDGE_INSUFFICIENT_STOCK
+export class FulfillmentNotAvailableError extends DoehApiError {} // EDGE_FULFILLMENT_NOT_AVAILABLE (V1: delivery not yet served)
+
 // ── 429 — rate limited (retried internally; only surfaced when retries exhaust)
 export class RateLimitedError extends DoehApiError {}
 
@@ -91,6 +98,11 @@ const CODE_TO_CLASS: Record<string, typeof DoehApiError> = {
   EDGE_INVALID_AMOUNT: InvalidAmountError,
   EDGE_UNSUPPORTED_CURRENCY: UnsupportedCurrencyError,
   EDGE_BAD_BODY: BadBodyError,
+  EDGE_EMPTY_ORDER: EmptyOrderError,
+  EDGE_UNKNOWN_SKU: UnknownSkuError,
+  EDGE_UNPRICED_SKU: UnpricedSkuError,
+  EDGE_INSUFFICIENT_STOCK: InsufficientStockError,
+  EDGE_FULFILLMENT_NOT_AVAILABLE: FulfillmentNotAvailableError,
 };
 
 /** Build the right typed error from an HTTP status + parsed body. */

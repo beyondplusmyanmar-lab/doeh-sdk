@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Doeh POS — Orders (Sales Submission) API
+  version: 0.1.0-experimental
+  description: >
+    EXPERIMENTAL. Submit a sale by line items; the server owns the business truth — it resolves
+    prices from the catalog, applies tax/discounts/promotions/loyalty, deducts inventory, records
+    COGS, and computes the totals. Clients NEVER send prices or a grand total: a submission is a
+    basket of {sku, qty}, not a money figure. The shop/branch scope (and the branch-native
+    currency) are derived from the merchant token server-side.
+
+    This is a façade over the existing POS sale aggregate, exposed publicly as a capability. It is
+    additive to and independent of /v1/delivery/orders (the legacy money-total endpoint), which is
+    unchanged. Money is integer minor units. Error codes are a stable, append-only ABI.
+servers:
+  - url: https://api.doehpos.com
+    description: production edge
+security:
+  - MerchantAuth: []
+tags:
+  - name: Orders
+paths:
+  /v1/orders:
+    post:
+      tags: [Orders]
+      operationId: submitOrder
+      summary: Submit a sale (by line items; server prices it)
+      description: >
+        Idempotent when an Idempotency-Key is supplied (a retry returns the original order). The
+        server resolves each line's price from the catalog in the branch-native currency and
+        computes all totals; the request carries no prices and no total.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TraceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SalesSubmission' }
+      responses:
+        '201':
+          description: Order created
+          content: { application/json: { schema: { $ref: '#/components/schemas/SubmissionResponse' } } }
+        '200':
+          description: Idempotent replay — the original order (idempotent=true)
+          content: { application/json: { schema: { $ref: '#/components/schemas/SubmissionResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }      # EDGE_BAD_BODY
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }       # API_KEY_SCOPE_DENIED, EDGE_TRANSPORT_DISABLED
+        '409': { $ref: '#/components/responses/Conflict' }        # EDGE_REPLAYED
+        '422': { $ref: '#/components/responses/Unprocessable' }   # EDGE_EMPTY_ORDER, EDGE_UNKNOWN_SKU, EDGE_UNPRICED_SKU, EDGE_INSUFFICIENT_STOCK, EDGE_FULFILLMENT_NOT_AVAILABLE
+  /v1/orders/{id}:
+    get:
+      tags: [Orders]
+      operationId: getSubmittedOrder
+      summary: Read a submitted order (with resolved lines and totals)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/TraceId'
+      responses:
+        '200':
+          description: The order
+          content: { application/json: { schema: { $ref: '#/components/schemas/SubmissionResponse' } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }        # EDGE_ORDER_NOT_FOUND (also cross-branch — no existence leak)
+components:
+  securitySchemes:
+    MerchantAuth:
+      type: http
+      scheme: bearer
+      description: Merchant API token. The shop/branch scope and branch-native currency are derived from the token.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Per-operation key. Strongly recommended on POST; enables safe retries (dedupe).
+      schema: { type: string, maxLength: 200 }
+    TraceId:
+      name: Trace-Id
+      in: header
+      required: false
+      schema: { type: string }
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[A-Za-z0-9_]+$' }
+  schemas:
+    Currency:
+      type: string
+      enum: [MMK, THB, USD, CNY, SGD, INR]
+    OrderStatus:
+      type: string
+      enum: [pending, confirmed, dispatched, delivered, cancelled]
+    PaymentStatus:
+      type: string
+      description: Settlement state. V1 is always `unpaid` (a submission is purchase intent, not settlement).
+      enum: [unpaid, paid]
+    FulfillmentType:
+      type: string
+      enum: [pickup, delivery, dine_in]
+    OrderLineInput:
+      type: object
+      required: [sku, qty]
+      properties:
+        sku:
+          type: string
+          description: Catalog SKU. The server resolves the product, its price, tax and inventory.
+        qty:
+          type: integer
+          minimum: 1
+        modifier_ids:
+          type: array
+          description: Optional catalog modifier ids; priced server-side.
+          items: { type: string }
+      description: >
+        A line carries WHAT and HOW MANY only. It never carries a price, a name, or a kitchen
+        station — those are owned by the catalog/kitchen capabilities and resolved server-side.
+    Customer:
+      type: object
+      description: Optional customer reference. Minimal by design.
+      properties:
+        phone: { type: string, description: E.164, e.g. +95912345678 }
+    Fulfillment:
+      type: object
+      properties:
+        type: { $ref: '#/components/schemas/FulfillmentType' }
+    SalesSubmission:
+      type: object
+      required: [lines]
+      properties:
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/OrderLineInput' }
+        customer: { $ref: '#/components/schemas/Customer' }
+        fulfillment: { $ref: '#/components/schemas/Fulfillment' }
+      description: >
+        No currency, no prices, no total. Currency is branch-native (token-derived); every money
+        figure is computed by the server and returned in the response.
+    OrderLine:
+      type: object
+      description: A resolved line as priced by the server.
+      properties:
+        sku: { type: string }
+        name: { type: string, description: Resolved product name. }
+        qty: { type: integer }
+        unit_price_minor: { type: integer, description: Server-resolved unit price (minor units). }
+        line_total_minor: { type: integer }
+        tax_minor: { type: integer }
+    OrderTotals:
+      type: object
+      properties:
+        currency: { $ref: '#/components/schemas/Currency' }
+        subtotal_minor: { type: integer }
+        discount_minor: { type: integer }
+        tax_minor: { type: integer }
+        grand_total_minor: { type: integer }
+    SubmittedOrder:
+      type: object
+      properties:
+        id: { type: string, example: ord_1c8494e9feeea2c7 }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        payment_status: { $ref: '#/components/schemas/PaymentStatus' }
+        shop_id: { type: integer }
+        branch_id: { type: integer }
+        lines:
+          type: array
+          items: { $ref: '#/components/schemas/OrderLine' }
+        totals: { $ref: '#/components/schemas/OrderTotals' }
+        customer: { $ref: '#/components/schemas/Customer' }
+        fulfillment: { $ref: '#/components/schemas/Fulfillment' }
+        created_at_utc: { type: string, format: date-time }
+        created_at_local:
+          type: string
+          description: created_at rendered in the branch's native timezone.
+        idempotency_key: { type: string }
+    SubmissionResponse:
+      type: object
+      properties:
+        ok: { type: boolean, example: true }
+        idempotent: { type: boolean, description: true if this was an idempotent replay }
+        order: { $ref: '#/components/schemas/SubmittedOrder' }
+    Error:
+      type: object
+      properties:
+        ok: { type: boolean, example: false }
+        code:
+          type: string
+          description: Stable, append-only error code (part of the API ABI).
+        step: { type: string, description: internal verification step (diagnostic only) }
+  responses:
+    BadRequest:
+      description: Malformed request
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Merchant authentication failed.
+      x-error-codes: [API_KEY_INVALID, API_KEY_EXPIRED, API_KEY_REVOKED, API_KEY_ENV_MISMATCH]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: >
+        Authenticated but not permitted: the key's effective scope does not permit this operation
+        (API_KEY_SCOPE_DENIED, server-derived), or a delivery fulfillment was requested for a branch
+        that is not currently participating in transport (EDGE_TRANSPORT_DISABLED).
+      x-error-codes: [API_KEY_SCOPE_DENIED, EDGE_TRANSPORT_DISABLED]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource not found (or not visible to this scope)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Replay or state conflict
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unprocessable:
+      description: >
+        Validation failed against the catalog. EDGE_EMPTY_ORDER (no lines), EDGE_UNKNOWN_SKU (a sku
+        is not in the catalog), EDGE_UNPRICED_SKU (no price coverage in the branch-native currency),
+        EDGE_INSUFFICIENT_STOCK (tracked product without enough stock),
+        EDGE_FULFILLMENT_NOT_AVAILABLE (V1: `delivery` fulfillment is not yet served — pickup/dine_in only).
+      x-error-codes: [EDGE_EMPTY_ORDER, EDGE_UNKNOWN_SKU, EDGE_UNPRICED_SKU, EDGE_INSUFFICIENT_STOCK, EDGE_FULFILLMENT_NOT_AVAILABLE]
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

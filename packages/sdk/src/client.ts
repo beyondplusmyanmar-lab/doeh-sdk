@@ -12,10 +12,10 @@
 import { BASE_URLS, DEFAULTS, SDK_VERSION, type Environment } from "./config.js";
 import { Transport, type FetchLike } from "./transport.js";
 import { DeliveryModule } from "./modules/delivery.js";
-import { KitchenModule } from "./modules/kitchen.js";
 import { LoyaltyModule } from "./modules/loyalty.js";
 import { MarketplaceModule } from "./modules/experimental/marketplace.js";
 import { RiderModule } from "./modules/experimental/rider.js";
+import { OrdersModule } from "./modules/experimental/orders.js";
 
 export interface DoehClientOptions {
   apiKey: string;
@@ -40,14 +40,18 @@ export interface DoehClientOptions {
 export class DoehClient {
   readonly delivery: DeliveryModule;
   /** Stable since 0.2.0 (reference-app exercised). */
-  readonly kitchen: KitchenModule;
-  /** Stable since 0.2.0 (reference-app exercised). */
   readonly loyalty: LoyaltyModule;
 
   /** @experimental Not yet exercised by the reference app. */
   readonly marketplace: MarketplaceModule;
   /** @experimental Not yet exercised by the reference app. */
   readonly rider: RiderModule;
+  /**
+   * @experimental Server-priced sales submission (`POST /v1/orders`). Additive
+   * to `delivery`; the edge façade over the POS sale aggregate is not yet built,
+   * so this is not live. See openapi/orders.yaml.
+   */
+  readonly orders: OrdersModule;
 
   private readonly transport: Transport;
 
@@ -79,10 +83,10 @@ export class DoehClient {
     });
 
     this.delivery = new DeliveryModule(this.transport);
-    this.kitchen = new KitchenModule(this.transport);
     this.loyalty = new LoyaltyModule(this.transport);
     this.marketplace = new MarketplaceModule(this.transport);
     this.rider = new RiderModule(this.transport);
+    this.orders = new OrdersModule(this.transport);
   }
 
   /** Internal: the configured transport (used by OfflineQueue wiring/tests). */

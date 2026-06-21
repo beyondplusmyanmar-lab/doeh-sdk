@@ -1,9 +1,9 @@
 /**
  * @beyondplusmm/doehpos-sdk — official TypeScript SDK for the Doeh POS public API.
  *
- * A typed port of the validated golden client. The stable surface is `delivery`,
- * `kitchen`, and `loyalty` (all reference-app exercised); `marketplace`/`rider`
- * remain @experimental until exercised by the reference app.
+ * A typed port of the validated golden client. The stable surface is `delivery`
+ * and `loyalty` (reference-app exercised); `marketplace`/`rider` remain
+ * @experimental until exercised by the reference app.
  */
 export { DoehClient } from "./client.js";
 export type { DoehClientOptions } from "./client.js";
@@ -31,6 +31,20 @@ export type {
   CallOptions,
 } from "./types.js";
 
+// Orders (Sales Submission) capability types — @experimental.
+export type {
+  FulfillmentType,
+  PaymentStatus,
+  OrderLineInput,
+  Customer,
+  Fulfillment,
+  SalesSubmission,
+  OrderLine,
+  OrderTotals,
+  SubmittedOrder,
+  SubmissionResponse,
+} from "./types.js";
+
 // Error ABI — consumers catch these classes, never parse `code` strings.
 export {
   DoehError,
@@ -47,6 +61,11 @@ export {
   InvalidAmountError,
   UnsupportedCurrencyError,
   BadBodyError,
+  EmptyOrderError,
+  UnknownSkuError,
+  UnpricedSkuError,
+  InsufficientStockError,
+  FulfillmentNotAvailableError,
   RateLimitedError,
   isRetryable,
   mapApiError,
@@ -54,7 +73,6 @@ export {
 
 // Module classes + their types (handy for typing app code).
 export { DeliveryModule } from "./modules/delivery.js";
-export { KitchenModule, type TicketCreate, type TicketResponse } from "./modules/kitchen.js";
 export { LoyaltyModule, type EarnInput, type AccountResponse } from "./modules/loyalty.js";
 export {
   MarketplaceModule,
@@ -62,3 +80,4 @@ export {
   type ListingResponse,
 } from "./modules/experimental/marketplace.js";
 export { RiderModule, type JobCreate, type JobResponse } from "./modules/experimental/rider.js";
+export { OrdersModule } from "./modules/experimental/orders.js";

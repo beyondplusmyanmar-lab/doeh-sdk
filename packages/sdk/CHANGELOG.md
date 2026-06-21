@@ -4,6 +4,30 @@ All notable changes to `@beyondplusmm/doehpos-sdk` are documented here. This pro
 [Semantic Versioning](https://semver.org/). The stable surface is `delivery`;
 `@experimental` modules may change in a minor release until they graduate.
 
+## 0.3.0
+
+### Removed (breaking)
+
+- **kitchen** capability — `client.kitchen`, `KitchenModule`, and the
+  `TicketCreate` / `TicketResponse` types are removed. Kitchen is an
+  operator-facing subsystem (KDS, printers, prep queues, staff workflows), not a
+  third-party developer capability, so it no longer ships in the developer SDK or
+  the Merchant API docs. Pre-1.0 breaking change per SemVer (a `0.x` minor may
+  break). Apps that used `client.kitchen` must remove those calls; `0.2.0`
+  remains available on npm with kitchen if needed during migration. The stable
+  surface is now `delivery` and `loyalty`.
+
+### Added (experimental)
+
+- **orders** capability (`client.orders.submit` / `.get`, `POST /v1/orders`) —
+  `@experimental`. A server-priced **sales submission**: the client sends a
+  basket of `{ sku, qty }`; the server resolves prices/tax/inventory/totals.
+  Clients never send prices, a grand total, or a currency. Additive to and
+  independent of the legacy money-total `delivery.create`. New typed errors:
+  `EmptyOrderError`, `UnknownSkuError`, `UnpricedSkuError`,
+  `InsufficientStockError`. **Not live** until the edge façade over the POS sale
+  aggregate exists — stays `@experimental` until exercised end to end.
+
 ## 0.2.0
 
 ### Changed

@@ -50,12 +50,6 @@ export default function Home() {
             disabled={!configured}
           />
           <Button
-            title="Kitchen ticket (experimental)"
-            onPress={() => router.push("/kitchen")}
-            variant="ghost"
-            disabled={!configured}
-          />
-          <Button
             title="Loyalty points (experimental)"
             onPress={() => router.push("/loyalty")}
             variant="ghost"
