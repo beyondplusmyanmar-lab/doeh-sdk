@@ -1,0 +1,16 @@
+{
+  "name": "doeh-quickstart",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Canonical SDK quickstart (install + auth + first order). CI-type-checked; rendered by the developer portal.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@beyondplusmm/doehpos-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

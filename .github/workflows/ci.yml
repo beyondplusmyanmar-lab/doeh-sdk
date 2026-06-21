@@ -30,3 +30,9 @@ jobs:
 
       - name: Typecheck Expo reference app
         run: pnpm --filter doeh-expo-reference typecheck
+
+      - name: Typecheck quickstart example (rendered by the developer portal)
+        run: pnpm --filter doeh-quickstart typecheck
+
+      - name: Golden-path drift gate (SDK code ↔ OpenAPI ↔ fixture)
+        run: pnpm --filter doeh-golden-path test

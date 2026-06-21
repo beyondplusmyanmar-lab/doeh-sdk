@@ -117,6 +117,15 @@ and was observed passing 14/14 live against `sandbox-api.doehpos.com`). Porting
 rather than reinventing is deliberate: it keeps the public surface from drifting
 away from the contract that was empirically proven.
 
+## Contract integrity
+
+> **Invariant.** The golden fixture is the sole source of truth for example
+> behavior. OpenAPI examples, SDK quickstarts, and portal content are
+> projections validated against it by CI.
+
+See [`docs/CONTRACT-HIERARCHY.md`](docs/CONTRACT-HIERARCHY.md) for the layer
+model and the rule that resolves conflicts between surfaces.
+
 ## Roadmap
 
 | Phase | Scope | Status |

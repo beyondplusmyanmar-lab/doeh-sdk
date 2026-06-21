@@ -12,7 +12,44 @@ const { order } = await client.orders.submit({
 });
 ```
 
-See [`openapi/orders.yaml`](../openapi/orders.yaml) for the full contract.
+See [`openapi/orders.yaml`](../openapi/orders.yaml) for the full contract — it is
+the authoritative machine contract; this page is the human reasoning model. If
+the two ever differ, OpenAPI governs the wire and this page governs intent.
+
+## How it works
+
+`/v1/orders` crosses two boundaries. The **edge** authenticates your key and
+validates request *structure*; it holds no order state and makes no pricing or
+business decisions. The **core** owns the order — it validates the basket,
+resolves price/tax/inventory server-side, and is the source of truth.
+
+```mermaid
+flowchart TD
+    Client["Your app"] -->|"POST /v1/orders · Bearer sk_…"| Edge
+
+    subgraph Edge["Edge — structural validation (auth + shape)"]
+        direction TB
+        G1{"valid API key?"} -->|"no"| R401["401 Unauthorized"]
+        G1 -->|"yes"| G2{"well-formed request?"}
+        G2 -->|"malformed"| R400["400 · EDGE_BAD_BODY"]
+        G2 -->|"yes"| Fwd["route → Orders core"]
+    end
+
+    Fwd --> Core
+
+    subgraph Core["Core — semantic validation (business truth)"]
+        direction TB
+        V{"valid order?"} -->|"no lines"| R422a["422 · EmptyOrderError"]
+        V -->|"unknown sku"| R422b["422 · UnknownSkuError"]
+        V -->|"ok"| P["resolve price · tax · inventory"]
+        P --> OK["201 Created · fully resolved order"]
+    end
+```
+
+> **Invariant: the edge validates structure; the core validates truth.**
+
+Clients never send prices or totals — only `{ sku, qty }`. The system returns a
+fully resolved order as the source of truth.
 
 ## Contract invariants
 
