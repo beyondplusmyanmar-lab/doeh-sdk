@@ -66,6 +66,16 @@ importers:
         specifier: workspace:*
         version: link:../../packages/sdk
 
+  examples/quickstart:
+    dependencies:
+      '@beyondplusmm/doehpos-sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/sdk:
     devDependencies:
       typescript:
