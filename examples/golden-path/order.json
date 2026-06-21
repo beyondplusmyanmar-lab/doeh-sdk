@@ -1,5 +1,10 @@
 {
   "$comment": "GOLDEN PATH — the single canonical Orders example. Source of truth for every surface: the SDK quickstart code, the OpenAPI request/response examples (openapi/orders.yaml), and the developer portal's Orders page all render or match THIS file. A CI drift gate (examples/golden-path/golden.test.mjs) fails if any surface diverges. Money is integer minor units; MMK has 0 decimal places so minor units == kyat. Values are illustrative (Orders is experimental / not yet live).",
+  "meta": {
+    "source": "deterministic-golden-path-fixture",
+    "pricing": "illustrative",
+    "captured_from_runtime": false
+  },
   "request": {
     "lines": [
       { "sku": "BURGER001", "qty": 2 },
