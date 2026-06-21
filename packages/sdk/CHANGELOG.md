@@ -4,7 +4,18 @@ All notable changes to `@beyondplusmm/doehpos-sdk` are documented here. This pro
 [Semantic Versioning](https://semver.org/). The stable surface is `delivery`;
 `@experimental` modules may change in a minor release until they graduate.
 
-## Unreleased
+## 0.3.0
+
+### Removed (breaking)
+
+- **kitchen** capability — `client.kitchen`, `KitchenModule`, and the
+  `TicketCreate` / `TicketResponse` types are removed. Kitchen is an
+  operator-facing subsystem (KDS, printers, prep queues, staff workflows), not a
+  third-party developer capability, so it no longer ships in the developer SDK or
+  the Merchant API docs. Pre-1.0 breaking change per SemVer (a `0.x` minor may
+  break). Apps that used `client.kitchen` must remove those calls; `0.2.0`
+  remains available on npm with kitchen if needed during migration. The stable
+  surface is now `delivery` and `loyalty`.
 
 ### Added (experimental)
 

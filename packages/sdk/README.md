@@ -69,8 +69,8 @@ const result = await queue.flush(); // reuses the same key — exactly one order
 
 ## Stability
 
-`delivery`, `kitchen`, and `loyalty` are the **stable** surface — all exercised
-by the Expo reference app (`kitchen`/`loyalty` graduated in 0.2.0). `marketplace`
+`delivery` and `loyalty` are the **stable** surface — both exercised by the Expo
+reference app (`loyalty` graduated in 0.2.0). `marketplace`
 and `rider` remain **`@experimental`** — generated from their OpenAPI specs and
 the golden client, but not yet exercised by the reference app. The **`orders`**
 capability (server-priced sales submission, `POST /v1/orders`) is also

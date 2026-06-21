@@ -1,7 +1,7 @@
 # Doeh POS — SDK & Expo reference
 
 Public developer artifacts for the Doeh POS API: a typed SDK and an Expo
-reference app you can fork and adapt to your own merchant, rider, kitchen, or
+reference app you can fork and adapt to your own merchant, rider, or
 marketplace integration.
 
 ```
@@ -21,11 +21,11 @@ doeh-sdk/
 ## What DOEH is
 
 DOEH is an **application platform**, not a merchant application. It exposes
-**composable business capabilities** — delivery, kitchen, loyalty, marketplace,
+**composable business capabilities** — delivery, loyalty, marketplace,
 rider — as independent SDK modules over a stable contract.
 
-- **Consume one capability or many.** A kitchen-display app may use only
-  `client.kitchen`; a loyalty kiosk only `client.loyalty`. The modules don't
+- **Consume one capability or many.** A delivery app may use only
+  `client.delivery`; a loyalty kiosk only `client.loyalty`. The modules don't
   depend on each other.
 - **DOEH prescribes no client UI or client-side workflow.** You build the screens
   and the flow; ship it to the app stores under your own branding.

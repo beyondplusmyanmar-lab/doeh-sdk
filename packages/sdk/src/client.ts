@@ -12,7 +12,6 @@
 import { BASE_URLS, DEFAULTS, SDK_VERSION, type Environment } from "./config.js";
 import { Transport, type FetchLike } from "./transport.js";
 import { DeliveryModule } from "./modules/delivery.js";
-import { KitchenModule } from "./modules/kitchen.js";
 import { LoyaltyModule } from "./modules/loyalty.js";
 import { MarketplaceModule } from "./modules/experimental/marketplace.js";
 import { RiderModule } from "./modules/experimental/rider.js";
@@ -40,8 +39,6 @@ export interface DoehClientOptions {
 
 export class DoehClient {
   readonly delivery: DeliveryModule;
-  /** Stable since 0.2.0 (reference-app exercised). */
-  readonly kitchen: KitchenModule;
   /** Stable since 0.2.0 (reference-app exercised). */
   readonly loyalty: LoyaltyModule;
 
@@ -86,7 +83,6 @@ export class DoehClient {
     });
 
     this.delivery = new DeliveryModule(this.transport);
-    this.kitchen = new KitchenModule(this.transport);
     this.loyalty = new LoyaltyModule(this.transport);
     this.marketplace = new MarketplaceModule(this.transport);
     this.rider = new RiderModule(this.transport);

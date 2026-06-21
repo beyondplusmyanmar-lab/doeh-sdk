@@ -1,9 +1,9 @@
 /**
  * @beyondplusmm/doehpos-sdk — official TypeScript SDK for the Doeh POS public API.
  *
- * A typed port of the validated golden client. The stable surface is `delivery`,
- * `kitchen`, and `loyalty` (all reference-app exercised); `marketplace`/`rider`
- * remain @experimental until exercised by the reference app.
+ * A typed port of the validated golden client. The stable surface is `delivery`
+ * and `loyalty` (reference-app exercised); `marketplace`/`rider` remain
+ * @experimental until exercised by the reference app.
  */
 export { DoehClient } from "./client.js";
 export type { DoehClientOptions } from "./client.js";
@@ -73,7 +73,6 @@ export {
 
 // Module classes + their types (handy for typing app code).
 export { DeliveryModule } from "./modules/delivery.js";
-export { KitchenModule, type TicketCreate, type TicketResponse } from "./modules/kitchen.js";
 export { LoyaltyModule, type EarnInput, type AccountResponse } from "./modules/loyalty.js";
 export {
   MarketplaceModule,
