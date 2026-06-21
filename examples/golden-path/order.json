@@ -1,0 +1,32 @@
+{
+  "$comment": "GOLDEN PATH — the single canonical Orders example. Source of truth for every surface: the SDK quickstart code, the OpenAPI request/response examples (openapi/orders.yaml), and the developer portal's Orders page all render or match THIS file. A CI drift gate (examples/golden-path/golden.test.mjs) fails if any surface diverges. Money is integer minor units; MMK has 0 decimal places so minor units == kyat. Values are illustrative (Orders is experimental / not yet live).",
+  "request": {
+    "lines": [
+      { "sku": "BURGER001", "qty": 2 },
+      { "sku": "COLA001", "qty": 1 }
+    ]
+  },
+  "response": {
+    "ok": true,
+    "order": {
+      "id": "ord_1c8494e9feeea2c7",
+      "status": "pending",
+      "payment_status": "unpaid",
+      "shop_id": 1,
+      "branch_id": 1,
+      "lines": [
+        { "sku": "BURGER001", "name": "Classic Burger", "qty": 2, "unit_price_minor": 3500, "line_total_minor": 7000, "tax_minor": 0 },
+        { "sku": "COLA001", "name": "Cola", "qty": 1, "unit_price_minor": 1200, "line_total_minor": 1200, "tax_minor": 0 }
+      ],
+      "totals": {
+        "currency": "MMK",
+        "subtotal_minor": 8200,
+        "discount_minor": 0,
+        "tax_minor": 0,
+        "grand_total_minor": 8200
+      },
+      "created_at_utc": "2026-06-21T08:30:00Z",
+      "created_at_local": "2026-06-21T15:00:00+06:30"
+    }
+  }
+}
