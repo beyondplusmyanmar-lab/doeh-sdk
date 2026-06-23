@@ -4,6 +4,26 @@ All notable changes to `@beyondplusmm/doehpos-sdk` are documented here. This pro
 [Semantic Versioning](https://semver.org/). The stable surface is `delivery`;
 `@experimental` modules may change in a minor release until they graduate.
 
+## Unreleased
+
+### Added
+
+- **loyalty `redeem`** — `client.loyalty.redeem(memberId, { points })` spends
+  points (`POST /v1/loyalty/members/{id}/redeem`). Idempotent with an
+  Idempotency-Key — a retried redeem never double-spends. Closes the parity gap
+  where the edge and OpenAPI exposed `redeem` but the SDK shipped only `earn` +
+  `getMember`. The loyalty surface (earn / redeem / getMember) now matches the
+  contract.
+- **`InsufficientPointsError`** (409, `EDGE_INSUFFICIENT_POINTS`) — thrown when a
+  redeem exceeds the balance; no points are deducted and no ledger entry written.
+  The current balance is on `err.body.balance`.
+- **`MemberNotFoundError`** (404, `EDGE_MEMBER_NOT_FOUND`) — thrown when reading a
+  member that has no account in the shop yet (earn auto-provisions).
+- **`PointsInput`** / **`RedeemInput`** types (shared `PointsOp` shape); `EarnInput`
+  kept as a back-compat alias.
+- First **loyalty unit tests** (earn / redeem / getMember request shaping,
+  idempotency, member-id validation, and the 409 → typed-error mapping).
+
 ## 0.3.0
 
 ### Removed (breaking)

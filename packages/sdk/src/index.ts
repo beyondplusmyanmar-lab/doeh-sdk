@@ -66,6 +66,8 @@ export {
   UnpricedSkuError,
   InsufficientStockError,
   FulfillmentNotAvailableError,
+  MemberNotFoundError,
+  InsufficientPointsError,
   RateLimitedError,
   isRetryable,
   mapApiError,
@@ -73,7 +75,13 @@ export {
 
 // Module classes + their types (handy for typing app code).
 export { DeliveryModule } from "./modules/delivery.js";
-export { LoyaltyModule, type EarnInput, type AccountResponse } from "./modules/loyalty.js";
+export {
+  LoyaltyModule,
+  type PointsInput,
+  type EarnInput,
+  type RedeemInput,
+  type AccountResponse,
+} from "./modules/loyalty.js";
 export {
   MarketplaceModule,
   type ListingCreate,

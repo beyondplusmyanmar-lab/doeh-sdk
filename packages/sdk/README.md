@@ -70,7 +70,10 @@ const result = await queue.flush(); // reuses the same key — exactly one order
 ## Stability
 
 `delivery` and `loyalty` are the **stable** surface — both exercised by the Expo
-reference app (`loyalty` graduated in 0.2.0). `marketplace`
+reference app (`loyalty` graduated in 0.2.0). The loyalty surface is `earn` /
+`redeem` / `getMember`; redeeming over the balance throws `InsufficientPointsError`
+(`409 EDGE_INSUFFICIENT_POINTS`, current balance on `err.body.balance`).
+`marketplace`
 and `rider` remain **`@experimental`** — generated from their OpenAPI specs and
 the golden client, but not yet exercised by the reference app. The **`orders`**
 capability (server-priced sales submission, `POST /v1/orders`) is also

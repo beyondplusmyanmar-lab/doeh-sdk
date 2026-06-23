@@ -15,6 +15,8 @@ import {
   OrderNotFoundError,
   RateLimitedError,
   DoehTransportError,
+  InsufficientPointsError,
+  MemberNotFoundError,
 } from "../dist/index.js";
 
 // ── a scriptable fake fetch ──────────────────────────────────────────────────
@@ -52,6 +54,8 @@ test("mapApiError returns typed classes per code", () => {
   assert.ok(mapApiError(401, { code: "API_KEY_REVOKED" }) instanceof ApiKeyRevokedError);
   assert.ok(mapApiError(404, { code: "EDGE_ORDER_NOT_FOUND" }) instanceof OrderNotFoundError);
   assert.ok(mapApiError(429, { code: "WHATEVER" }) instanceof RateLimitedError);
+  assert.ok(mapApiError(409, { code: "EDGE_INSUFFICIENT_POINTS" }) instanceof InsufficientPointsError);
+  assert.ok(mapApiError(404, { code: "EDGE_MEMBER_NOT_FOUND" }) instanceof MemberNotFoundError);
 });
 
 test("retry predicate: only transport + 429", () => {
@@ -215,4 +219,61 @@ test("orders catalog error codes map to typed classes", async () => {
   assert.ok(mapApiError(422, { code: "EDGE_EMPTY_ORDER" }) instanceof EmptyOrderError);
   assert.ok(mapApiError(422, { code: "EDGE_INSUFFICIENT_STOCK" }) instanceof InsufficientStockError);
   assert.ok(mapApiError(422, { code: "EDGE_FULFILLMENT_NOT_AVAILABLE" }) instanceof FulfillmentNotAvailableError);
+});
+
+// ── loyalty (earn / getMember / redeem) ──────────────────────────────────────
+const account = (balance) => ({ ok: true, account: { shop_id: 1, member_id: "m1", balance, entries: 1, ledger: [] } });
+
+test("loyalty.earn posts points to /earn with bearer + idempotency", async () => {
+  const f = makeFetch();
+  f.setBehavior(() => ({ status: 200, body: account(200) }));
+  const c = client(f);
+  const res = await c.loyalty.earn("LOYALTY_DEMO_001", { points: 200, reason: "signup" }, { idempotencyKey: "earn-1" });
+  assert.equal(res.account.balance, 200);
+  const { url, init, headers } = f.calls[0];
+  assert.equal(url, "https://sandbox-api.doehpos.com/v1/loyalty/members/LOYALTY_DEMO_001/earn");
+  assert.equal(init.method, "POST");
+  assert.equal(headers["Authorization"], "Bearer sk_test_unit");
+  assert.equal(headers["Idempotency-Key"], "earn-1");
+  assert.deepEqual(JSON.parse(init.body), { points: 200, reason: "signup" });
+});
+
+test("loyalty.redeem posts points to /redeem with idempotency (no double-spend key)", async () => {
+  const f = makeFetch();
+  f.setBehavior(() => ({ status: 200, body: { ...account(50), idempotent: false } }));
+  const c = client(f);
+  const res = await c.loyalty.redeem("m1", { points: 150 }, { idempotencyKey: "redeem-1" });
+  assert.equal(res.account.balance, 50);
+  const { url, init, headers } = f.calls[0];
+  assert.equal(url, "https://sandbox-api.doehpos.com/v1/loyalty/members/m1/redeem");
+  assert.equal(init.method, "POST");
+  assert.equal(headers["Idempotency-Key"], "redeem-1");
+  assert.deepEqual(JSON.parse(init.body), { points: 150 });
+});
+
+test("loyalty.redeem auto-mints an idempotency key when none is given", async () => {
+  const f = makeFetch();
+  f.setBehavior(() => ({ status: 200, body: account(10) }));
+  const c = client(f);
+  await c.loyalty.redeem("m1", { points: 5 });
+  assert.ok(f.calls[0].headers["Idempotency-Key"], "redeem must carry an idempotency key");
+});
+
+test("loyalty.redeem over balance throws InsufficientPointsError carrying the balance", async () => {
+  const f = makeFetch();
+  f.setBehavior(() => ({ status: 409, body: { ok: false, code: "EDGE_INSUFFICIENT_POINTS", balance: 900 } }));
+  const c = client(f);
+  await assert.rejects(
+    () => c.loyalty.redeem("m1", { points: 5000 }),
+    (e) => e instanceof InsufficientPointsError && e.status === 409 && e.body.balance === 900,
+  );
+});
+
+test("loyalty validates the member id client-side (no request sent)", async () => {
+  const f = makeFetch();
+  const c = client(f);
+  await assert.rejects(() => c.loyalty.earn("has-hyphens", { points: 1 }), RangeError);
+  await assert.rejects(() => c.loyalty.redeem("has-hyphens", { points: 1 }), RangeError);
+  await assert.rejects(() => c.loyalty.getMember("bad!"), RangeError);
+  assert.equal(f.calls.length, 0);
 });

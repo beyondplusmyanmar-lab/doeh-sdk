@@ -1,0 +1,34 @@
+{
+  "$comment": "GOLDEN PATH — the canonical Loyalty lifecycle. Source of truth for the loyalty surface: the SDK loyalty module (earn/redeem/getMember), the reference app's loyalty screen, and the live sandbox matrix (test/golden.integration.mjs) all replay THESE steps. A drift gate (examples/golden-path/loyalty.test.mjs) fails if the arithmetic or the guard diverges. Points are whole integers; balances are SHOP-scoped and never negative; redeem cannot exceed the balance. Values are illustrative.",
+  "meta": {
+    "source": "deterministic-golden-path-fixture",
+    "captured_from_runtime": false,
+    "points": "illustrative"
+  },
+  "member_id": "LOYALTY_DEMO_001",
+  "shop_id": 1,
+  "steps": [
+    {
+      "op": "earn",
+      "note": "earn auto-provisions the member account (no separate create)",
+      "request": { "points": 1000, "reason": "signup bonus" },
+      "response": { "ok": true, "account": { "shop_id": 1, "member_id": "LOYALTY_DEMO_001", "balance": 1000, "entries": 1 } }
+    },
+    {
+      "op": "earn",
+      "request": { "points": 200, "reason": "purchase" },
+      "response": { "ok": true, "account": { "shop_id": 1, "member_id": "LOYALTY_DEMO_001", "balance": 1200, "entries": 2 } }
+    },
+    {
+      "op": "redeem",
+      "request": { "points": 300, "reason": "reward" },
+      "response": { "ok": true, "account": { "shop_id": 1, "member_id": "LOYALTY_DEMO_001", "balance": 900, "entries": 3 } }
+    },
+    {
+      "op": "redeem-over-balance",
+      "note": "rejected: no points deducted, no ledger entry written; balance unchanged",
+      "request": { "points": 5000 },
+      "error": { "status": 409, "code": "EDGE_INSUFFICIENT_POINTS", "balance": 900 }
+    }
+  ]
+}

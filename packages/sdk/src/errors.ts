@@ -82,6 +82,14 @@ export class UnpricedSkuError extends DoehApiError {} // EDGE_UNPRICED_SKU
 export class InsufficientStockError extends DoehApiError {} // EDGE_INSUFFICIENT_STOCK
 export class FulfillmentNotAvailableError extends DoehApiError {} // EDGE_FULFILLMENT_NOT_AVAILABLE (V1: delivery not yet served)
 
+// ── loyalty ──────────────────────────────────────────────────────────────────
+// 404: the member has no account in this shop (earn auto-provisions, so this is
+// only seen on a read/redeem before any earn).
+export class MemberNotFoundError extends DoehApiError {} // EDGE_MEMBER_NOT_FOUND
+// 409: redeeming more than the balance — no points deducted, no ledger entry
+// written. The current balance is carried on `body.balance`.
+export class InsufficientPointsError extends DoehApiError {} // EDGE_INSUFFICIENT_POINTS
+
 // ── 429 — rate limited (retried internally; only surfaced when retries exhaust)
 export class RateLimitedError extends DoehApiError {}
 
@@ -103,6 +111,8 @@ const CODE_TO_CLASS: Record<string, typeof DoehApiError> = {
   EDGE_UNPRICED_SKU: UnpricedSkuError,
   EDGE_INSUFFICIENT_STOCK: InsufficientStockError,
   EDGE_FULFILLMENT_NOT_AVAILABLE: FulfillmentNotAvailableError,
+  EDGE_MEMBER_NOT_FOUND: MemberNotFoundError,
+  EDGE_INSUFFICIENT_POINTS: InsufficientPointsError,
 };
 
 /** Build the right typed error from an HTTP status + parsed body. */
