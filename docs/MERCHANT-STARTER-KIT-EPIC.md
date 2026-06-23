@@ -1,6 +1,8 @@
-# Epic: Merchant Mobile Starter Kit — Spec / Plan (M1)
+# Epic: Merchant Mobile Starter Kit — Spec / Plan
 
-> Status: **M1 APPROVED** (2026-06-23). Authored 2026-06-23.
+> Status: **v1 CLOSED** (2026-06-23). M1 approved → M2–M7 shipped. Authored 2026-06-23.
+> Delivered artifact: **`beyondplusmyanmar-lab/doeh-loyalty-template`**, tag
+> **`v1.0.0`**. See the [v1 closure](#13-v1-closure-2026-06-23) at the end.
 > Principle this spec enforces: **lock capability to the real platform surface.**
 > Every screen maps to a *shipped* SDK/API operation, or it is explicitly *gated*
 > on a named future platform epic. No screen assumes a surface that does not exist.
@@ -189,14 +191,16 @@ section from §3.
 
 | # | Scope | Status |
 |---|---|---|
-| **M1** | **This spec approved (Option 1 locked)** | ✅ |
-| M2 | `doeh-loyalty-template` scaffold (Expo, SDK-first, sandbox `sk_test_`) | ⏳ |
-| M3 | Branding system (typed config + schema + theming) | ⏳ |
-| M4 | Loyalty vertical wired (getMember/earn/redeem/history) — green against sandbox | ⏳ |
-| M5 | **Reference token broker + docs** (the real production gate — see §11a) | ⏳ |
-| M6 | EAS build pipeline docs | ⏳ |
-| M7 | Merchant onboarding guide | ⏳ |
+| **M1** | **This spec approved (Option 1 locked)** | ✅ `2359d14` (this repo) |
+| M2 | `doeh-loyalty-template` scaffold (Expo, SDK-first, sandbox `sk_test_`) | ✅ `b5919ac` |
+| M3 | Branding system (typed config + schema + theming) | ✅ `a7cc30d` |
+| M4 | Loyalty vertical wired (getMember/earn/redeem/history) — green against sandbox | ✅ `f2b9b73` (engineering; live-run = operator) |
+| M5 | **Reference token broker + docs** (the real production gate — see §11a) | ✅ `ac01469` (12/12 mock test) |
+| M6 | EAS build pipeline docs | ✅ `111c4b0` |
+| M7 | Merchant onboarding guide | ✅ `fad3231` |
 | M8 | **Publishable-key / device-token platform epic** (broker → `pk_`; adapter swap) | 🔮 future |
+
+(M2–M7 commits are in `beyondplusmyanmar-lab/doeh-loyalty-template`, tag `v1.0.0`.)
 
 Out of this epic, tracked as dependent platform epics (§12): Catalog, Cart,
 Consumer login.
@@ -229,3 +233,56 @@ This spec does **not** assume any of the three. The v1 template is designed so
 each lands additively when its epic ships. Only Catalog-Read (1) and
 Consumer-Identity (2) actually gate the "full commerce app" north star; (3) is an
 optimization, not a gate.
+
+---
+
+## 13. v1 closure (2026-06-23)
+
+**v1 — Loyalty Starter — is CLOSED.** M1 approved, M2–M7 shipped. The delivered
+artifact is the standalone public repo
+**`beyondplusmyanmar-lab/doeh-loyalty-template`**, tagged **`v1.0.0`** (`fad3231`),
+tree clean.
+
+**The original goal is met:** a merchant's developer can clone the template, brand
+it in one file, deploy a small token broker they control, build with EAS, and
+publish their own loyalty app to the App Store and Google Play — under their own
+accounts, with `sk_live_` never in the app.
+
+### What shipped (mapped to this spec)
+
+- **E1 / §4 — SDK-first.** Every network call goes through
+  `@beyondplusmm/doehpos-sdk` (single seam `src/api/client.ts`); no raw HTTP.
+- **E2 / §5 — Screens.** Splash/Home → Loyalty → Settings shippable; **Login,
+  Catalog, Cart ship as flagged-OFF stubs** (`src/config/features.ts`) that make
+  zero API calls — the literal "no false assumptions" mechanism.
+- **E3 / §6 — Branding.** `brand.json` is the single source of truth (app *and*
+  native/Expo config via `app.config.js`), JSON-schema-validated (`brand.schema.json`
+  + `pnpm validate:brand`). M3 fully realised.
+- **E4 / §3, §7 — Security/env.** No `sk_live_` in the binary; sandbox embeds
+  `sk_test_` only; `EXPO_PUBLIC_SHOP_ID` dropped (key is the shop).
+- **E5 / §8 — Distribution.** Merchant owns Apple/Google/EAS; docs in `EAS.md`.
+- **E6 / §9 — Reference vs template.** Kept distinct: SDK-repo
+  `apps/expo-reference` (teaching) vs this clone-and-own template (product).
+- **E7 / §10 — Docs.** `ONBOARDING` (start here) · `QUICKSTART` · `BRANDING` ·
+  `PRODUCTION` · `EAS` · `broker/README`.
+- **M5 broker.** Reference token broker in `broker/` (Option 1) — holds `sk_live_`,
+  issues short-lived JWTs, refresh/revoke, proxies `/v1/loyalty/*` with the key
+  swapped in; self-contained test 12/12 green (key-swap + revocation proven).
+
+### Pending — release-acceptance, not engineering
+
+- **M4 live sandbox run** — needs an `sk_test_` key minted on the prod host
+  (`pnpm smoke:loyalty`). Engineering complete; this is operator validation.
+- **Device walkthrough** — run on a real simulator/device (human).
+
+### Deferred
+
+- **M8 — publishable-key / device-token primitive** (future platform epic): makes
+  the broker optional via an auth-adapter swap.
+- **Full commerce app** north star: still gated on Catalog-Read + Consumer-Identity
+  (§12). The v1 frame is built to absorb them additively.
+
+### Possible v2 (driven by real merchant friction, not pre-built)
+
+White-label theming packs · push-notification adapters · analytics hooks · receipt
+templates · multi-location loyalty · the `pk_` migration path once M8 exists.
