@@ -4,7 +4,7 @@ All notable changes to `@beyondplusmm/doehpos-sdk` are documented here. This pro
 [Semantic Versioning](https://semver.org/). The stable surface is `delivery`;
 `@experimental` modules may change in a minor release until they graduate.
 
-## Unreleased
+## 0.4.0 — 2026-06-23
 
 ### Added
 
