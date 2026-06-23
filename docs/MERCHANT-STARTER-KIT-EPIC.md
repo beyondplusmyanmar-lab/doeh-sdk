@@ -1,8 +1,10 @@
 # Epic: Merchant Mobile Starter Kit — Spec / Plan
 
-> Status: **v1 CLOSED** (2026-06-23). M1 approved → M2–M7 shipped. Authored 2026-06-23.
-> Delivered artifact: **`beyondplusmyanmar-lab/doeh-loyalty-template`**, tag
-> **`v1.0.0`**. See the [v1 closure](#13-v1-closure-2026-06-23) at the end.
+> Status: **v1 CLOSED → MAINTENANCE MODE** (2026-06-23). M1 approved → M2–M7 shipped;
+> v1.1–v1.2.1 DX/examples follow-ons done. Authored 2026-06-23.
+> Delivered artifact: **`beyondplusmyanmar-lab/doeh-loyalty-template`**, latest tag
+> **`v1.2.1`**. See the [v1 closure](#13-v1-closure-2026-06-23) and
+> [post-v1 releases](#14-post-v1-releases--maintenance-mode) at the end.
 > Principle this spec enforces: **lock capability to the real platform surface.**
 > Every screen maps to a *shipped* SDK/API operation, or it is explicitly *gated*
 > on a named future platform epic. No screen assumes a surface that does not exist.
@@ -286,3 +288,53 @@ accounts, with `sk_live_` never in the app.
 
 White-label theming packs · push-notification adapters · analytics hooks · receipt
 templates · multi-location loyalty · the `pk_` migration path once M8 exists.
+
+---
+
+## 14. Post-v1 releases & maintenance mode
+
+After v1 closed, a few **developer-experience** and **examples** follow-ons shipped
+in `doeh-loyalty-template`. None changed the architecture, security posture, SDK
+surface, or the gated-capability set — they reduce onboarding friction only.
+
+| Tag | Commit | What |
+|---|---|---|
+| `v1.0.0` | `fad3231` | M1–M7 starter kit (see §13) |
+| `v1.0.1` | `4284764` | Docs: TestFlight/Play submission checklist (`docs/SUBMISSION.md`) |
+| `v1.1.0` | `515c801` | DX: `pnpm bootstrap`, `pnpm doctor`, and **mock mode** |
+| `v1.2.0` | `1dfc98e` | **Sandbox Inspector** (developer-only) |
+| `v1.2.1` | `f134a06` | Five **example brand packs** + `pnpm validate:examples` |
+
+**v1.1.0 — DX.** `pnpm bootstrap` (one-command setup), `pnpm doctor` (config +
+key/broker-posture validator), and `EXPO_PUBLIC_DOEH_MODE=mock` mock mode — an
+in-memory loyalty client so devs build the UI with no key. Mock mode is a
+*template* feature (drop-in behind the app's `LoyaltyClient` interface), **not** an
+SDK flag; it throws the real SDK error classes so `instanceof` handling is exercised.
+
+**v1.2.0 — Sandbox Inspector.** A tiny developer-only page (Settings → Developer
+Tools): environment, member balance + ledger, and mock-only seed/reset actions.
+Hidden in production builds; "tier" shown there is a clearly-labeled client-side
+demo, not a platform concept (the loyalty API is balance + ledger only).
+
+**v1.2.1 — Example brands.** `examples/{coffee-shop,beauty-salon,bakery,restaurant,
+bookstore}`, each branding-only (`brand.json` + icon/splash + README), conformed to
+the real `brand.schema.json` and guarded by `pnpm validate:examples` so a copied
+pack always passes `pnpm doctor`. No business logic.
+
+### Governance — what the template will and won't accept
+
+The template is now in **maintenance mode**. To prevent drift back into building a
+merchant product (the back-office is *not* what this is):
+
+- **Allowed:** bug fixes · SDK parity (re-align if DOEH later exposes
+  coupons/membership/rewards/referrals/wallets) · Expo/RN/EAS upgrades ·
+  documentation · small UX polish · more example brands.
+- **Deferred (v2-ish):** `pnpm create-shop` CLI generator · docker broker stack
+  (Redis/Postgres) · **M8** publishable-key (v2 = `pk_` replaces the broker).
+- **Rejected (product territory):** merchant admin panels · coupon CMS/editors ·
+  analytics dashboards · tier management/CRUD · CMS · wallet management · QR
+  generators · push-campaign tools. Goal = *let merchants build their own app*, not
+  replace the merchant portal.
+
+Highest-value next step is **non-engineering**: get 2–3 real merchants/devs to
+clone → brand → attempt a store submission; their friction drives any future work.
